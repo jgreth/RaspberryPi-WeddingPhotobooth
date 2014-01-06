@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-'''
-Usage:
-python timed_capture.py
-'''
+
 import datetime
+from linkedList import *
 from time import sleep
 import subprocess
 import shlex
@@ -12,6 +10,7 @@ import RPIO as GPIO
 import os
 import sys
 import signal
+import Image
  
 fps = 1 # The number of frames to capture per second.
 totalPictures = 4 # The total capture time.
@@ -19,6 +18,10 @@ pictureWidth = 640
 pictureHeight = 480
 
 pictureName= "photoBoothPic.jpg"
+imageList = LinkedList()
+photo = 0
+img = Image.new("RGB",(int(1280),int(960)))
+
 
 raspistillPID = "0"
 
@@ -30,11 +33,6 @@ GPIO.setup(GPIO_FLASH_PIN,GPIO.OUT)
 
 GPIO.output(GPIO_FLASH_PIN, False)
 
-def sigint_handler(signum, frame):
-    print "Control C detected, exiting"
-    sys.exit()
- 
-signal.signal(signal.SIGINT, sigint_handler)
 
 class RaspiThread(Thread):
     def __init__(self):
@@ -50,17 +48,21 @@ class CaptureThread(Thread):
         self.buttonPressed = False
         
     def run(self):
+        global raspistillPID
         
         count = 0
         while True:
             if self.buttonPressed:
                 print "Remember to Smile"
-                newDirName = str(datetime.datetime.now()).replace(' ', '_')
+                newDirName = str(datetime.datetime.now()).replace(' ', '_').split('.')[0].replace(':', '-')
                 os.mkdir(newDirName)
+                subprocess.call(['chmod', '777', newDirName])
                 sleep(3)
                 while count != totalPictures:
                     print "Taking pictue " + str(count)
                     GPIO.output(GPIO_FLASH_PIN, True)
+
+                    print "1"
                     subprocess.call(['kill', '-USR1' , raspistillPID])
                     sleep(0.25)
                     GPIO.output(GPIO_FLASH_PIN, False)
@@ -70,16 +72,63 @@ class CaptureThread(Thread):
                     count = count + 1
                 print "Picture capture complete"
 
+                monitorFolder(newDirName)
+                makeCollage()
+
                 #Reset
                 self.buttonPressed = False
                 count = 0
 
                 
     def setButtonPressed(self, buttonInput):
-        print "Setting buttonPressed to " + str(buttonInput)
         self.buttonPressed = buttonInput
 
+def addPicture(fileName, location):
+    global imageList
+    imageList.add(fileName,location)
+    print "Added " + fileName + " to " + location
+
+def monitorFolder(source):
+    fileExtList = [".jpg"];
+    tempList = os.listdir(source)
+    
+    if len(tempList) % 4 == 0:
+        for picture in tempList:
+            if os.path.splitext(picture)[1] in fileExtList:
+                fileName = os.path.join(source,picture)
+                pindex = tempList.index(picture) + 1
+                if pindex % 4 == 1:
+                    location = "0,0"
+                elif pindex % 4 == 2:
+                    location = "640,0"
+                elif pindex % 4 == 3:
+                    location = "0,480"
+                elif pindex % 4 == 0:
+                    location = "640,480"
+                addPicture(fileName,location)
+
+def makeCollage():
+    print "Creating collage"
+    global imageList
+    global photo
+    global img
+    
+    destination = "/home/pi/MyProjects/raw"
+    fileName = "/home/pi/MyProjects/img"
+    current = imageList.selfHead()
+    while not imageList.isEmpty() and current != None:
+        pic = current.getData()
+        img.paste(pic,(int(current.getLocation()[0]),int(current.getLocation()[1])))          
+        if current.getPosition() % 4 == 0 :
+            photo += 1
+            img.save(fileName+ "/Photobooth "+ str(photo) + ".jpg")
+        shutil.move(current.getFileName(), destination)
+        current = current.getNext()
+    imageList = LinkedList()
+    print "Collage created"
+
 def main():
+    global raspistillPID
     raspiThread = RaspiThread()
     raspiThread.start()
 
@@ -91,6 +140,7 @@ def main():
                          stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     proc1.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.
     out,err=proc2.communicate()
+    print out
     raspistillPID = out.split(" ")[1]
     proc2.stdout.close()
 
@@ -109,8 +159,9 @@ def main():
             captureThread.setButtonPressed(inputValue)
 
         sleep(0.25)
+        
 try:
     main()
 except KeyboardInterrupt:
     print "Exception caught"
-    
+    sys.exit()
