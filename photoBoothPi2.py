@@ -11,16 +11,25 @@ import os
 import sys
 import signal
 import Image
+import shutil
+import wx
  
 fps = 1 # The number of frames to capture per second.
 totalPictures = 4 # The total capture time.
 pictureWidth = 640
 pictureHeight = 480
 
+reducedHeight = 430
+reducedWidth = 322
+collageReducedPictureSize = reducedHeight, reducedWidth
+
 pictureName= "photoBoothPic.jpg"
 imageList = LinkedList()
 photo = 0
-img = Image.new("RGB",(int(1280),int(960)))
+#img = Image.new("RGB",(int(1280),int(960)))
+#img = Image.new("RGB",(int(1400),int(1200)))
+#img = Image.new("RGB",(int(640),int(480)))
+img = Image.open("img/photoboothlayout.jpg")
 
 
 raspistillPID = "0"
@@ -39,7 +48,7 @@ class RaspiThread(Thread):
         Thread.__init__(self)
 
     def run(self):
-        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "0,0,640,480", '-v']
+        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "0,100,640,480", '-v']
         subprocess.call(raspiInitCommand)
 
 class CaptureThread(Thread):
@@ -60,14 +69,21 @@ class CaptureThread(Thread):
                 sleep(3)
                 while count != totalPictures:
                     print "Taking pictue " + str(count)
+
+                    #Turn on flash
                     GPIO.output(GPIO_FLASH_PIN, True)
 
-                    print "1"
                     subprocess.call(['kill', '-USR1' , raspistillPID])
                     sleep(0.25)
+
+                    #Turn off flash
                     GPIO.output(GPIO_FLASH_PIN, False)
 
-                    subprocess.call(['mv',pictureName, newDirName + "/pic-" + str(count) + ".jpg"])
+                    sleep(1)
+
+                    outputPictureName = newDirName + "/pic-" + str(count) + ".jpg"
+                    subprocess.call(['mv',pictureName, outputPictureName])
+                    
                     sleep(fps)
                     count = count + 1
                 print "Picture capture complete"
@@ -85,12 +101,29 @@ class CaptureThread(Thread):
 
 def addPicture(fileName, location):
     global imageList
-    imageList.add(fileName,location)
+    resizePicture(fileName)
+    imageList.add(fileName + "_collage",location)
     print "Added " + fileName + " to " + location
 
+def resizePicture(imagePath):
+    global collageReducedPictureSize
+    
+    image = Image.open(imagePath)
+    image.thumbnail(collageReducedPictureSize, Image.ANTIALIAS)
+    image.save(imagePath + "_collage", "JPEG")
+
 def monitorFolder(source):
+    global reducedHeight
+    global reducedWidth
+    
     fileExtList = [".jpg"];
     tempList = os.listdir(source)
+
+    print tempList
+    print len(tempList) % 4
+
+    topBorderOffset = "139"
+    leftBorderOffset = "65"
     
     if len(tempList) % 4 == 0:
         for picture in tempList:
@@ -98,13 +131,17 @@ def monitorFolder(source):
                 fileName = os.path.join(source,picture)
                 pindex = tempList.index(picture) + 1
                 if pindex % 4 == 1:
-                    location = "0,0"
+                    print "Pic % 1 " + picture
+                    location = leftBorderOffset + "," + topBorderOffset
                 elif pindex % 4 == 2:
-                    location = "640,0"
+                    print "Pic % 2 " + picture
+                    location = str(reducedWidth + 200) + "," + topBorderOffset
                 elif pindex % 4 == 3:
-                    location = "0,480"
+                    print "Pic % 3 " + picture
+                    location = str(reducedWidth + 200) + "," + str(reducedHeight + 37)
                 elif pindex % 4 == 0:
-                    location = "640,480"
+                    print "Pic % 0 " + picture
+                    location = leftBorderOffset + "," + str(reducedHeight + 37)
                 addPicture(fileName,location)
 
 def makeCollage():
@@ -116,16 +153,36 @@ def makeCollage():
     destination = "/home/pi/MyProjects/raw"
     fileName = "/home/pi/MyProjects/img"
     current = imageList.selfHead()
+    collageName = ""
     while not imageList.isEmpty() and current != None:
         pic = current.getData()
         img.paste(pic,(int(current.getLocation()[0]),int(current.getLocation()[1])))          
         if current.getPosition() % 4 == 0 :
             photo += 1
-            img.save(fileName+ "/Photobooth "+ str(photo) + ".jpg")
+            collageName = fileName+ "/Photobooth_"+ str(photo) + ".jpg"
+            img.save(collageName)
         shutil.move(current.getFileName(), destination)
         current = current.getNext()
     imageList = LinkedList()
+    showCollage(collageName)
     print "Collage created"
+
+def showCollage(filepath):
+    a = wx.PySimpleApp()
+    print filepath 
+    wximg = wx.Image(filepath,wx.BITMAP_TYPE_JPEG)
+    wxbmp = wximg.ConvertToBitmap()
+    f = wx.Frame(None, -1, "Your Picture")
+    f.SetPosition(wx.Point(640,0))
+    #f.SetSize( wxbmp.GetSize() )
+    #f.SetSize( wx.Size(726,768) )
+    f.SetSize( wx.Size(1224,984) )
+    wx.StaticBitmap(f,-1,wxbmp,(0,0))
+    f.Show(True)
+
+    #Show picture for 5 seconds and close down
+    wx.FutureCall(5000, f.Destroy)
+    a.MainLoop()
 
 def main():
     global raspistillPID
@@ -159,9 +216,10 @@ def main():
             captureThread.setButtonPressed(inputValue)
 
         sleep(0.25)
-        
-try:
-    main()
-except KeyboardInterrupt:
-    print "Exception caught"
-    sys.exit()
+
+if __name__ == "__main__":      
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "Exception caught"
+        sys.exit()
