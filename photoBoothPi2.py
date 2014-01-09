@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+#TODO:
+#   1- Resize the window displaying the collage
+#   2- Create a window that show some dialow of what is happening
+#   3- Add sound to the countdown
+#   4- Upload picture to google album
+
+
 import datetime
 from linkedList import *
 from time import sleep
@@ -31,6 +38,8 @@ photo = 0
 #img = Image.new("RGB",(int(640),int(480)))
 img = Image.open("img/photoboothlayout.jpg")
 
+currenTime = datetime.datetime.now()
+
 
 raspistillPID = "0"
 
@@ -58,12 +67,14 @@ class CaptureThread(Thread):
         
     def run(self):
         global raspistillPID
+        global currentTime
         
         count = 0
         while True:
             if self.buttonPressed:
                 print "Remember to Smile"
-                newDirName = str(datetime.datetime.now()).replace(' ', '_').split('.')[0].replace(':', '-')
+                currentTime = datetime.datetime.now()
+                newDirName = str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
                 os.mkdir(newDirName)
                 subprocess.call(['chmod', '777', newDirName])
                 sleep(3)
@@ -123,7 +134,7 @@ def monitorFolder(source):
     print len(tempList) % 4
 
     topBorderOffset = "139"
-    leftBorderOffset = "65"
+    leftBorderOffset = "73"
     
     if len(tempList) % 4 == 0:
         for picture in tempList:
@@ -149,6 +160,7 @@ def makeCollage():
     global imageList
     global photo
     global img
+    global currentTime
     
     destination = "/home/pi/MyProjects/raw"
     fileName = "/home/pi/MyProjects/img"
@@ -159,7 +171,7 @@ def makeCollage():
         img.paste(pic,(int(current.getLocation()[0]),int(current.getLocation()[1])))          
         if current.getPosition() % 4 == 0 :
             photo += 1
-            collageName = fileName+ "/Photobooth_"+ str(photo) + ".jpg"
+            collageName = fileName+ "/Photobooth_"+ currentTime.strftime("%H_%M_%S") + ".jpg"
             img.save(collageName)
         shutil.move(current.getFileName(), destination)
         current = current.getNext()
