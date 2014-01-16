@@ -5,6 +5,7 @@
 #   2- Create a window that show some dialow of what is happening
 #   3- Add sound to the countdown
 #   4- Upload picture to google album
+#   5- Add reboot button
 
 
 import datetime
@@ -20,6 +21,8 @@ import signal
 import Image
 import shutil
 import wx
+
+import photoBoothGUI as gui
  
 fps = 1 # The number of frames to capture per second.
 totalPictures = 4 # The total capture time.
@@ -33,12 +36,9 @@ collageReducedPictureSize = reducedHeight, reducedWidth
 pictureName= "photoBoothPic.jpg"
 imageList = LinkedList()
 photo = 0
-#img = Image.new("RGB",(int(1280),int(960)))
-#img = Image.new("RGB",(int(1400),int(1200)))
-#img = Image.new("RGB",(int(640),int(480)))
-img = Image.open("img/photoboothlayout.jpg")
+img = Image.open("res/photoboothlayout.jpg")
 
-currenTime = datetime.datetime.now()
+currentTime = datetime.datetime.now()
 
 
 raspistillPID = "0"
@@ -51,13 +51,19 @@ GPIO.setup(GPIO_FLASH_PIN,GPIO.OUT)
 
 GPIO.output(GPIO_FLASH_PIN, False)
 
+class GUIThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+
+    def run(self):
+        gui.startGUI()
 
 class RaspiThread(Thread):
     def __init__(self):
         Thread.__init__(self)
 
     def run(self):
-        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "0,100,640,480", '-v']
+        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "85,118,800,600", '-v'] #133
         subprocess.call(raspiInitCommand)
 
 class CaptureThread(Thread):
@@ -185,19 +191,21 @@ def showCollage(filepath):
     wximg = wx.Image(filepath,wx.BITMAP_TYPE_JPEG)
     wxbmp = wximg.ConvertToBitmap()
     f = wx.Frame(None, -1, "Your Picture")
-    f.SetPosition(wx.Point(640,0))
-    #f.SetSize( wxbmp.GetSize() )
-    #f.SetSize( wx.Size(726,768) )
-    f.SetSize( wx.Size(1224,984) )
+    f.SetPosition(wx.Point(1000,0))
+    f.SetSize( wxbmp.GetSize() )
     wx.StaticBitmap(f,-1,wxbmp,(0,0))
     f.Show(True)
 
     #Show picture for 5 seconds and close down
-    wx.FutureCall(5000, f.Destroy)
+    wx.FutureCall(15000, f.Destroy)
     a.MainLoop()
 
 def main():
     global raspistillPID
+
+    guiThread = GUIThread()
+    guiThread.start()
+    
     raspiThread = RaspiThread()
     raspiThread.start()
 

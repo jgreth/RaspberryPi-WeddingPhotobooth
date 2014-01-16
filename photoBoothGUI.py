@@ -17,22 +17,22 @@ class MainPanel(wx.Panel):
         
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 
-        wximg = wx.Image("/home/pi/MyProjects/2014-01-06_04-00-08/pic-0.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wximg.ConvertToBitmap()
-        self.picture2 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,60))
+        self.picture1 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,60))
 
-        wximg = wx.Image("/home/pi/MyProjects/2014-01-06_04-00-08/pic-1.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wximg.ConvertToBitmap()
         self.picture2 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,305))
 
-        wximg = wx.Image("/home/pi/MyProjects/2014-01-06_04-00-08/pic-2.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wximg.ConvertToBitmap()
         self.picture3 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,550))
 
-        wximg = wx.Image("/home/pi/MyProjects/2014-01-06_04-00-08/pic-3.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture4.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wximg.ConvertToBitmap()
         self.picture4 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,795))
@@ -42,6 +42,20 @@ class MainPanel(wx.Panel):
         loc = wx.Bitmap("res/photoboothappbackground.jpg")
         dc = wx.ClientDC(self)
         dc.DrawBitmap(loc, 0, 0)
+
+    def updatePicture(pictureNumber, picturePath):
+        wximg = wx.Image(picturePath,wx.BITMAP_TYPE_JPEG)
+        wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
+        wxbmp = wximg.ConvertToBitmap()
+
+        if pictureNumber == "1":
+            self.picture1 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,60))
+        elif pictureNumber == "2":
+            self.picture2 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,305))
+        elif pictureNumber == "3":
+            self.picture3 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,550))
+        elif pictureNumber == "4":    
+            self.picture4 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,795))
 
 class MainWindow(wx.Frame):
     
@@ -57,8 +71,16 @@ class MainWindow(wx.Frame):
 
         self.ShowFullScreen(True)
 
-app = wx.App(False)
-frame = MainWindow(None," ")
-frame.Show(True)
+def updatePicture(pictureNumber, picture):
+    frame.panel.updatePicture(pictureNumber, picture)
 
-app.MainLoop()
+def startGUI():
+    app = wx.App(False)
+    frame = MainWindow(None," ")
+    frame.Show(True)
+
+    app.MainLoop()
+
+
+if __name__ == "__main__":
+    startGUI()
