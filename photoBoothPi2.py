@@ -14,6 +14,7 @@ from time import sleep
 import subprocess
 import shlex
 from threading import Thread
+import threading #TODO Remove
 import RPIO as GPIO
 import os
 import sys
@@ -21,8 +22,10 @@ import signal
 import Image
 import shutil
 import wx
+import gc
+from wx.lib.pubsub import Publisher
 
-import photoBoothGUI as gui
+
  
 fps = 1 # The number of frames to capture per second.
 totalPictures = 4 # The total capture time.
@@ -51,22 +54,37 @@ GPIO.setup(GPIO_FLASH_PIN,GPIO.OUT)
 
 GPIO.output(GPIO_FLASH_PIN, False)
 
-class GUIThread(Thread):
-    def __init__(self):
-        Thread.__init__(self)
+class GPIOThread(Thread):
+    #This thread is in charge of handleing the button presses to trigger
+    #the capturing of the pictures, reset button and eventually control the flash also.
 
-    def run(self):
-        gui.startGUI()
+    def __init__(self, captureThread):
+        Thread.__init__(self)
+        self.captureThread = captureThread
+
+    def run(self): 
+        print "GPIO is run from: " + threading.current_thread().name
+
+        while True:
+            inputValue = GPIO.input(GPIO_INPUT_PIN)
+            if inputValue== True:
+                print "Button Pressed"
+                self.captureThread.setButtonPressed(inputValue)
+
+            sleep(0.25)
 
 class RaspiThread(Thread):
+    #This thread launches the camera feed
     def __init__(self):
         Thread.__init__(self)
 
     def run(self):
+        print "Running raspitstill from " + threading.current_thread().name
         raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "85,118,800,600", '-v'] #133
         subprocess.call(raspiInitCommand)
 
 class CaptureThread(Thread):
+    #This thread is in charge of sending the signal to the camera to capture the 4 images and 
     def __init__(self):
         Thread.__init__(self)
         self.buttonPressed = False
@@ -74,10 +92,13 @@ class CaptureThread(Thread):
     def run(self):
         global raspistillPID
         global currentTime
+
+        print "Capture thread name is: " + threading.current_thread().name
         
         count = 0
         while True:
             if self.buttonPressed:
+                Publisher().sendMessage("reset", "Nothing")
                 print "Remember to Smile"
                 currentTime = datetime.datetime.now()
                 newDirName = str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
@@ -100,9 +121,18 @@ class CaptureThread(Thread):
 
                     outputPictureName = newDirName + "/pic-" + str(count) + ".jpg"
                     subprocess.call(['mv',pictureName, outputPictureName])
+
+                    count = count + 1
+
+                    #gui.updatePicture(outputPictureName)
+                    #Send message to GUI thread
+                    print "Publishing message to update picture from " + threading.current_thread().name
+                    Publisher().sendMessage("update", outputPictureName)
                     
                     sleep(fps)
-                    count = count + 1
+
+                    gc.collect()
+                    
                 print "Picture capture complete"
 
                 monitorFolder(newDirName)
@@ -132,6 +162,8 @@ def resizePicture(imagePath):
 def monitorFolder(source):
     global reducedHeight
     global reducedWidth
+
+    print "MonitorFolder is run from: " + threading.current_thread().name
     
     fileExtList = [".jpg"];
     tempList = os.listdir(source)
@@ -182,36 +214,22 @@ def makeCollage():
         shutil.move(current.getFileName(), destination)
         current = current.getNext()
     imageList = LinkedList()
-    showCollage(collageName)
+    #gui.showCollage(collageName)
+    #Send message to GUI thread
+    print "Calling showCollage from: " + threading.current_thread().name
+    Publisher().sendMessage("showCollage", collageName)
     print "Collage created"
-
-def showCollage(filepath):
-    a = wx.PySimpleApp()
-    print filepath 
-    wximg = wx.Image(filepath,wx.BITMAP_TYPE_JPEG)
-    wxbmp = wximg.ConvertToBitmap()
-    f = wx.Frame(None, -1, "Your Picture")
-    f.SetPosition(wx.Point(1000,0))
-    f.SetSize( wxbmp.GetSize() )
-    wx.StaticBitmap(f,-1,wxbmp,(0,0))
-    f.Show(True)
-
-    #Show picture for 5 seconds and close down
-    wx.FutureCall(15000, f.Destroy)
-    a.MainLoop()
 
 def main():
     global raspistillPID
-
-    guiThread = GUIThread()
-    guiThread.start()
     
     raspiThread = RaspiThread()
+    raspiThread.setDaemon(True)
     raspiThread.start()
 
     sleep(2)
 
-    #Get raspistill process id
+    #Get raspistill process id, needed to tell camera to capture picture
     proc1 = subprocess.Popen(shlex.split('ps t'),stdout=subprocess.PIPE)
     proc2 = subprocess.Popen(shlex.split('grep raspistill'),stdin=proc1.stdout,
                          stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -224,22 +242,19 @@ def main():
     print "raspistill pid = " + raspistillPID
 
     captureThread = CaptureThread()
+    captureThread.setDaemon(True)
     captureThread.start()
 
+    gpioThread = GPIOThread(captureThread)
+    gpioThread.setDaemon(True)
+    gpioThread.start()
 
-    print "Ready to capture images"
 
-    while True:
-        inputValue = GPIO.input(GPIO_INPUT_PIN)
-        if inputValue== True:
-            print "Button Pressed"
-            captureThread.setButtonPressed(inputValue)
 
-        sleep(0.25)
 
-if __name__ == "__main__":      
+'''if __name__ == "__main__":      
     try:
         main()
     except KeyboardInterrupt:
         print "Exception caught"
-        sys.exit()
+        sys.exit()'''
