@@ -70,35 +70,35 @@ class MainPanel(wx.Panel):
         self.frame = parent
         
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
-
         self.resetPanelInner()
-
-        print "Main Panel is from " + threading.current_thread().name
 
         photoBoothPi2.main()
 
 
     def resetPanelInner(self):
         
-        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture1 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,60))
 
-        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture2 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,305))
 
-        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture3 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,550))
 
-        wximg = wx.Image("/home/pi/MyProjects/res/blankPicture4.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wx.Image("res/blankPicture4.jpg",wx.BITMAP_TYPE_JPEG)
         wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture4 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,795))
+
+        counter ="0"
+        self.countdownText = wx.StaticText(self, -1, counter, (950,800)) 
 
         self.reset = False
 
@@ -113,13 +113,8 @@ class MainPanel(wx.Panel):
     def updatePictureInner(self):
         print "Updating picture from " + threading.current_thread().name
 
-        #pdb.set_trace()
-        
-        print "PicturePath: " + str(self.picturePath.data)
         twximg = wx.Image("./" + str(self.picturePath.data),wx.BITMAP_TYPE_JPEG)
         bmp = twximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight).ConvertToBitmap()
-
-        print self.pictureTakenCounter 
 
         if self.pictureTakenCounter == 1:
             self.picture1 = wx.StaticBitmap(self, -1, bmp, (self.takenPictureLeftOffset,60))

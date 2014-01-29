@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
 #TODO:
-#   1- Resize the window displaying the collage
 #   2- Create a window that show some dialow of what is happening
-#   3- Add sound to the countdown
 #   4- Upload picture to google album
-#   5- Add reboot button
-
 
 import datetime
 from linkedList import *
@@ -25,10 +21,8 @@ import wx
 import gc
 from wx.lib.pubsub import Publisher
 
-
- 
-fps = 1 # The number of frames to capture per second.
-totalPictures = 4 # The total capture time.
+pictureDelay = 5 #Seconds between each picture
+totalPictures = 4 # The total number of pictures that will be taken.
 pictureWidth = 640
 pictureHeight = 480
 
@@ -39,23 +33,25 @@ collageReducedPictureSize = reducedHeight, reducedWidth
 pictureName= "photoBoothPic.jpg"
 imageList = LinkedList()
 photo = 0
-img = Image.open("res/photoboothlayout.jpg")
+img = Image.open("./res/photoboothlayout.jpg")
 
 currentTime = datetime.datetime.now()
 
-
 raspistillPID = "0"
 
+#GPIO Setup
+GPIO_RESET_PIN = 18
 GPIO_INPUT_PIN = 24
 GPIO_FLASH_PIN = 25
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(GPIO_RESET_PIN,GPIO.IN)
 GPIO.setup(GPIO_INPUT_PIN,GPIO.IN)
 GPIO.setup(GPIO_FLASH_PIN,GPIO.OUT)
 
 GPIO.output(GPIO_FLASH_PIN, False)
 
 class GPIOThread(Thread):
-    #This thread is in charge of handleing the button presses to trigger
+    #This thread is in charge of handling the button presses to trigger
     #the capturing of the pictures, reset button and eventually control the flash also.
 
     def __init__(self, captureThread):
@@ -71,6 +67,11 @@ class GPIOThread(Thread):
                 print "Button Pressed"
                 self.captureThread.setButtonPressed(inputValue)
 
+            resetValue = GPIO.input(GPIO_RESET_PIN)
+            if resetValue == True:
+                print "Reset Button Pressed! Rebooting system now....."
+                os.system("sudo reboot")
+
             sleep(0.25)
 
 class RaspiThread(Thread):
@@ -84,7 +85,7 @@ class RaspiThread(Thread):
         subprocess.call(raspiInitCommand)
 
 class CaptureThread(Thread):
-    #This thread is in charge of sending the signal to the camera to capture the 4 images and 
+    #This thread is in charge of sending the signal to the camera to capture the 4 images 
     def __init__(self):
         Thread.__init__(self)
         self.buttonPressed = False
@@ -108,6 +109,12 @@ class CaptureThread(Thread):
                 while count != totalPictures:
                     print "Taking pictue " + str(count)
 
+                    for i in range(0, pictureDelay):
+                        print  "Countdown begins: " + str(i)
+                        #Do the Beep and update the GUI
+                        os.system("aplay ./beep-07.wav")
+                        sleep(1)
+
                     #Turn on flash
                     GPIO.output(GPIO_FLASH_PIN, True)
 
@@ -124,14 +131,11 @@ class CaptureThread(Thread):
 
                     count = count + 1
 
-                    #gui.updatePicture(outputPictureName)
                     #Send message to GUI thread
                     print "Publishing message to update picture from " + threading.current_thread().name
                     Publisher().sendMessage("update", outputPictureName)
-                    
-                    sleep(fps)
 
-                    gc.collect()
+                    #gc.collect()
                     
                 print "Picture capture complete"
 
@@ -214,7 +218,7 @@ def makeCollage():
         shutil.move(current.getFileName(), destination)
         current = current.getNext()
     imageList = LinkedList()
-    #gui.showCollage(collageName)
+
     #Send message to GUI thread
     print "Calling showCollage from: " + threading.current_thread().name
     Publisher().sendMessage("showCollage", collageName)
@@ -248,13 +252,3 @@ def main():
     gpioThread = GPIOThread(captureThread)
     gpioThread.setDaemon(True)
     gpioThread.start()
-
-
-
-
-'''if __name__ == "__main__":      
-    try:
-        main()
-    except KeyboardInterrupt:
-        print "Exception caught"
-        sys.exit()'''

@@ -1,4 +1,4 @@
-RaspberryPi
+RaspberryPi Photobooth
 ===========
 
-RaspberryPi Project Code Repo
+RaspberryPi Photobooth Project Code Repo
