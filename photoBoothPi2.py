@@ -21,7 +21,7 @@ import wx
 import gc
 from wx.lib.pubsub import Publisher
 
-pictureDelay = 5 #Seconds between each picture
+pictureDelay = 3 #Seconds between each picture
 totalPictures = 4 # The total number of pictures that will be taken.
 pictureWidth = 640
 pictureHeight = 480
@@ -49,6 +49,9 @@ GPIO.setup(GPIO_INPUT_PIN,GPIO.IN)
 GPIO.setup(GPIO_FLASH_PIN,GPIO.OUT)
 
 GPIO.output(GPIO_FLASH_PIN, False)
+
+#Configure sound TODO may want to move this to be set at login in the user profile type file
+os.system("sudo amixer cset numid=3 2")
 
 class GPIOThread(Thread):
     #This thread is in charge of handling the button presses to trigger
@@ -111,6 +114,7 @@ class CaptureThread(Thread):
 
                     for i in range(0, pictureDelay):
                         print  "Countdown begins: " + str(i)
+                        Publisher().sendMessage("updateCountdown", str(i))
                         #Do the Beep and update the GUI
                         os.system("aplay ./beep-07.wav")
                         sleep(1)

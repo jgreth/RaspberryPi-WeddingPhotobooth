@@ -36,6 +36,9 @@ class PhotoBoothApp(wx.App):
                 self.mainFrame.panel.updatePicture = False
             elif self.mainFrame.panel.reset == True:
                 self.mainFrame.panel.resetPanelInner()
+            elif self.mainFrame.panel.updateCountdownImage == True:
+                self.mainFrame.panel.updateCountdownInner()
+                self.mainFrame.panel.updateCountdownImage = False
                 
             else:    
                 self.ProcessIdle()
@@ -60,7 +63,10 @@ class MainPanel(wx.Panel):
 
     pictureTakenCounter = 0
 
+    countdownImages = []
+
     updatePicture = False
+    updateCountdownImage = False
     picturePath = ""
     reset = False
     
@@ -72,33 +78,32 @@ class MainPanel(wx.Panel):
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.resetPanelInner()
 
+        self.initCountdownTimerImage()
+
         photoBoothPi2.main()
 
 
     def resetPanelInner(self):
         
         wximg = wx.Image("res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
-        wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture1 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,60))
 
         wximg = wx.Image("res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
-        wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture2 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,305))
 
         wximg = wx.Image("res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
-        wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture3 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,550))
 
         wximg = wx.Image("res/blankPicture4.jpg",wx.BITMAP_TYPE_JPEG)
-        wximg = wximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture4 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,795))
 
-        counter ="0"
-        self.countdownText = wx.StaticText(self, -1, counter, (950,800)) 
+        #counter ="0"
+        #self.countdownText = wx.StaticText(self, -1, counter, (950,800))
+        #self.countdownText.SetForegroundColour((255,0,0))
 
         self.reset = False
 
@@ -133,6 +138,34 @@ class MainPanel(wx.Panel):
         self.picturePath = picturePath
         self.updatePicture = True
 
+    def initCountdownTimerImage(self):
+        
+        wximg = wx.Image("res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wximg.Rescale(400, 600)
+        wxbmp = wx.BitmapFromImage(wximg)
+        self.countdownImages.append(wxbmp)
+
+        wximg = wx.Image("res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wximg.Rescale(400, 600)
+        wxbmp = wx.BitmapFromImage(wximg)
+        self.countdownImages.append(wxbmp)
+
+        wximg = wx.Image("res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
+        wximg = wximg.Rescale(400, 600)
+        wxbmp = wx.BitmapFromImage(wximg)
+        self.countdownImages.append(wxbmp)
+
+        #TEMP
+        #self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[0],(925, 200))
+
+    def updateCountdown(self, count):
+        print "Updating countdown image " + str(count.data)
+        self.updateCountdownImage = True
+        self.counterIndex = int(count.data)
+        
+    def updateCountdownInner(self):
+        #TODO: Need to either remove the countdown text or fix the delay
+        #self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.counterIndex],(925,200))
 
 class MainWindow(wx.Frame):
 
@@ -153,6 +186,7 @@ class MainWindow(wx.Frame):
         Publisher().subscribe(self.showCollage, "showCollage")
         Publisher().subscribe(self.panel.updatePicture, "update")
         Publisher().subscribe(self.panel.resetPanel, "reset")
+        Publisher().subscribe(self.panel.updateCountdown, "updateCountdown")
 
         print "MainWindow thread: " + threading.current_thread().name
 
