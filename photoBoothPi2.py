@@ -84,7 +84,8 @@ class RaspiThread(Thread):
 
     def run(self):
         print "Running raspitstill from " + threading.current_thread().name
-        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "85,118,800,600", '-v'] #133
+        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "85,118,800,600", '-v', "-q", "100"] 
+        #raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "--fullpreview", '-v'] 
         subprocess.call(raspiInitCommand)
 
 class CaptureThread(Thread):
@@ -111,19 +112,20 @@ class CaptureThread(Thread):
                 sleep(3)
                 while count != totalPictures:
                     print "Taking pictue " + str(count)
+                    Publisher().sendMessage("startCountdown", str(count))
+                    sleep(0.5)
 
-                    for i in range(0, pictureDelay):
-                        print  "Countdown begins: " + str(i)
-                        Publisher().sendMessage("updateCountdown", str(i))
+                    for i in range(0, pictureDelay):                        
                         #Do the Beep and update the GUI
-                        os.system("aplay ./beep-07.wav")
+                        os.system("aplay ./res/beep-07.wav")
                         sleep(1)
-
+                    
                     #Turn on flash
                     GPIO.output(GPIO_FLASH_PIN, True)
 
                     subprocess.call(['kill', '-USR1' , raspistillPID])
-                    sleep(0.25)
+                    os.system("aplay ./res/camera-shutter-click-01.wav")
+                    #sleep(0.25)
 
                     #Turn off flash
                     GPIO.output(GPIO_FLASH_PIN, False)
@@ -139,12 +141,15 @@ class CaptureThread(Thread):
                     print "Publishing message to update picture from " + threading.current_thread().name
                     Publisher().sendMessage("update", outputPictureName)
 
+                    sleep(2)
+
                     #gc.collect()
                     
                 print "Picture capture complete"
-
+                Publisher().sendMessage("showProcessingText", "Nothing")
                 monitorFolder(newDirName)
                 makeCollage()
+                Publisher().sendMessage("hideProcessingText", "Nothing")
 
                 #Reset
                 self.buttonPressed = False
@@ -180,7 +185,7 @@ def monitorFolder(source):
     print len(tempList) % 4
 
     topBorderOffset = "139"
-    leftBorderOffset = "73"
+    leftBorderOffset = "60" #"73"
     
     if len(tempList) % 4 == 0:
         for picture in tempList:
@@ -192,10 +197,10 @@ def monitorFolder(source):
                     location = leftBorderOffset + "," + topBorderOffset
                 elif pindex % 4 == 2:
                     print "Pic % 2 " + picture
-                    location = str(reducedWidth + 200) + "," + topBorderOffset
+                    location = str(reducedWidth + 213) + "," + topBorderOffset
                 elif pindex % 4 == 3:
                     print "Pic % 3 " + picture
-                    location = str(reducedWidth + 200) + "," + str(reducedHeight + 37)
+                    location = str(reducedWidth + 213) + "," + str(reducedHeight + 37)
                 elif pindex % 4 == 0:
                     print "Pic % 0 " + picture
                     location = leftBorderOffset + "," + str(reducedHeight + 37)
@@ -208,8 +213,8 @@ def makeCollage():
     global img
     global currentTime
     
-    destination = "/home/pi/MyProjects/raw"
-    fileName = "/home/pi/MyProjects/img"
+    destination = "./raw"
+    fileName = "./img"
     current = imageList.selfHead()
     collageName = ""
     while not imageList.isEmpty() and current != None:

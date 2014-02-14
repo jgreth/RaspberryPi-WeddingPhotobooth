@@ -5,6 +5,7 @@ import os
 import photoBoothPi2
 from wx.lib.pubsub import Publisher
 import threading
+from time import sleep
 
 import pdb
 
@@ -21,10 +22,10 @@ class PhotoBoothApp(wx.App):
         old = wx.EventLoop.GetActive()
         wx.EventLoop.SetActive(eventLoop)
         while True:
-
+ 
             while eventLoop.Pending():
                 eventLoop.Dispatch()
-                
+                       
             if self.mainFrame.showCollage == True:
                 print "Showing Collage"
                 self.mainFrame.showCollageInner()
@@ -37,9 +38,7 @@ class PhotoBoothApp(wx.App):
             elif self.mainFrame.panel.reset == True:
                 self.mainFrame.panel.resetPanelInner()
             elif self.mainFrame.panel.updateCountdownImage == True:
-                self.mainFrame.panel.updateCountdownInner()
-                self.mainFrame.panel.updateCountdownImage = False
-                
+                self.mainFrame.panel.updateCountdownInner()                
             else:    
                 self.ProcessIdle()
 
@@ -64,6 +63,7 @@ class MainPanel(wx.Panel):
     pictureTakenCounter = 0
 
     countdownImages = []
+    countdownCounter = 0
 
     updatePicture = False
     updateCountdownImage = False
@@ -79,6 +79,10 @@ class MainPanel(wx.Panel):
         self.resetPanelInner()
 
         self.initCountdownTimerImage()
+
+        wxBmp =  wx.Image("res/processing.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
+        self.processingText = wx.StaticBitmap(self,-1, wxBmp,(85,850))
+        self.processingText.Hide()
 
         photoBoothPi2.main()
 
@@ -100,10 +104,6 @@ class MainPanel(wx.Panel):
         wximg = wx.Image("res/blankPicture4.jpg",wx.BITMAP_TYPE_JPEG)
         wxbmp = wx.BitmapFromImage(wximg)
         self.picture4 = wx.StaticBitmap(self,-1,wxbmp,(self.takenPictureLeftOffset,795))
-
-        #counter ="0"
-        #self.countdownText = wx.StaticText(self, -1, counter, (950,800))
-        #self.countdownText.SetForegroundColour((255,0,0))
 
         self.reset = False
 
@@ -140,33 +140,44 @@ class MainPanel(wx.Panel):
 
     def initCountdownTimerImage(self):
         
-        wximg = wx.Image("res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
-        wximg = wximg.Rescale(400, 600)
+        wximg = wx.Image("res/countdown3.jpg",wx.BITMAP_TYPE_JPEG)
         wxbmp = wx.BitmapFromImage(wximg)
         self.countdownImages.append(wxbmp)
 
-        wximg = wx.Image("res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
-        wximg = wximg.Rescale(400, 600)
+        wximg = wx.Image("res/countdown2.jpg",wx.BITMAP_TYPE_JPEG)
         wxbmp = wx.BitmapFromImage(wximg)
         self.countdownImages.append(wxbmp)
 
-        wximg = wx.Image("res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
-        wximg = wximg.Rescale(400, 600)
+        wximg = wx.Image("res/countdown1.jpg",wx.BITMAP_TYPE_JPEG)
         wxbmp = wx.BitmapFromImage(wximg)
         self.countdownImages.append(wxbmp)
 
-        #TEMP
-        #self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[0],(925, 200))
-
-    def updateCountdown(self, count):
-        print "Updating countdown image " + str(count.data)
+    def startCountdown(self, count):
         self.updateCountdownImage = True
-        self.counterIndex = int(count.data)
         
     def updateCountdownInner(self):
-        #TODO: Need to either remove the countdown text or fix the delay
-        #self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.counterIndex],(925,200))
 
+        if self.countdownCounter < 3:
+            if self.countdownCounter != 0:
+                self.countdownImage.Hide()
+            print "Updating countdown: " + str(self.countdownCounter)
+            self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.countdownCounter],(1025,100))
+            self.countdownCounter += 1
+        else:
+            self.countdownCounter = 0
+            self.updateCountdownImage = False
+            self.countdownImage.Hide()
+            #sleep(1)
+
+    def showProcessingText(self, param):
+        print "Showing processing message..."
+        self.processingText.Show()
+
+
+    def hideProcessingText(self, param):
+        print "Showing processing message..."
+        self.processingText.Hide()
+        
 class MainWindow(wx.Frame):
 
     showCollage = True
@@ -186,7 +197,9 @@ class MainWindow(wx.Frame):
         Publisher().subscribe(self.showCollage, "showCollage")
         Publisher().subscribe(self.panel.updatePicture, "update")
         Publisher().subscribe(self.panel.resetPanel, "reset")
-        Publisher().subscribe(self.panel.updateCountdown, "updateCountdown")
+        Publisher().subscribe(self.panel.startCountdown, "startCountdown")
+        Publisher().subscribe(self.panel.showProcessingText, "showProcessingText")
+        Publisher().subscribe(self.panel.hideProcessingText, "hideProcessingText")
 
         print "MainWindow thread: " + threading.current_thread().name
 
@@ -195,7 +208,7 @@ class MainWindow(wx.Frame):
         collageWindow = CollageFrame(self.collagePath)
         collageWindow.Show()
 
-        #Show picture for 5 seconds and close down
+        #Show picture for 15 seconds and close down
         wx.FutureCall(15000, collageWindow.Destroy)
         print "Collage Displayed!"
 
