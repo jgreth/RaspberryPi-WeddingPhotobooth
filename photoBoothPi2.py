@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 #TODO:
-#   2- Create a window that show some dialow of what is happening
 #   4- Upload picture to google album
 
 import datetime
@@ -23,8 +22,10 @@ from wx.lib.pubsub import Publisher
 
 pictureDelay = 3 #Seconds between each picture
 totalPictures = 4 # The total number of pictures that will be taken.
-pictureWidth = 640
-pictureHeight = 480
+#pictureWidth = 640
+#pictureHeight = 480
+pictureWidth = 2592
+pictureHeight = 1944
 
 reducedHeight = 430
 reducedWidth = 322
@@ -34,6 +35,8 @@ pictureName= "photoBoothPic.jpg"
 imageList = LinkedList()
 photo = 0
 img = Image.open("./res/photoboothlayout.jpg")
+
+outputPath = "/media/KINGSTON/"
 
 currentTime = datetime.datetime.now()
 
@@ -48,7 +51,7 @@ GPIO.setup(GPIO_RESET_PIN,GPIO.IN)
 GPIO.setup(GPIO_INPUT_PIN,GPIO.IN)
 GPIO.setup(GPIO_FLASH_PIN,GPIO.OUT)
 
-GPIO.output(GPIO_FLASH_PIN, False)
+GPIO.output(GPIO_FLASH_PIN, True)
 
 #Configure sound TODO may want to move this to be set at login in the user profile type file
 os.system("sudo amixer cset numid=3 2")
@@ -84,7 +87,7 @@ class RaspiThread(Thread):
 
     def run(self):
         print "Running raspitstill from " + threading.current_thread().name
-        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "85,118,800,600", '-v', "-q", "100"] 
+        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "85,118,800,600", '-v', "-q", "100", "-fp"] 
         #raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "--fullpreview", '-v'] 
         subprocess.call(raspiInitCommand)
 
@@ -106,7 +109,7 @@ class CaptureThread(Thread):
                 Publisher().sendMessage("reset", "Nothing")
                 print "Remember to Smile"
                 currentTime = datetime.datetime.now()
-                newDirName = str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
+                newDirName = outputPath + str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
                 os.mkdir(newDirName)
                 subprocess.call(['chmod', '777', newDirName])
                 sleep(3)
@@ -119,29 +122,29 @@ class CaptureThread(Thread):
                         #Do the Beep and update the GUI
                         os.system("aplay ./res/beep-07.wav")
                         sleep(1)
-                    
-                    #Turn on flash
-                    GPIO.output(GPIO_FLASH_PIN, True)
 
                     subprocess.call(['kill', '-USR1' , raspistillPID])
                     os.system("aplay ./res/camera-shutter-click-01.wav")
                     #sleep(0.25)
 
-                    #Turn off flash
+                    #Turn on flash
                     GPIO.output(GPIO_FLASH_PIN, False)
-
-                    sleep(1)
 
                     outputPictureName = newDirName + "/pic-" + str(count) + ".jpg"
                     subprocess.call(['mv',pictureName, outputPictureName])
 
                     count = count + 1
 
+                    sleep(2)
+
+                    #Turn off flash
+                    GPIO.output(GPIO_FLASH_PIN, True)
+
                     #Send message to GUI thread
                     print "Publishing message to update picture from " + threading.current_thread().name
                     Publisher().sendMessage("update", outputPictureName)
 
-                    sleep(2)
+                    sleep(5)
 
                     #gc.collect()
                     
@@ -214,7 +217,7 @@ def makeCollage():
     global currentTime
     
     destination = "./raw"
-    fileName = "./img"
+    fileName = outputPath + "/img"
     current = imageList.selfHead()
     collageName = ""
     while not imageList.isEmpty() and current != None:
@@ -232,6 +235,9 @@ def makeCollage():
     print "Calling showCollage from: " + threading.current_thread().name
     Publisher().sendMessage("showCollage", collageName)
     print "Collage created"
+
+def mimicButtonPress(state):
+    captureThread.buttonPressed = state;
 
 def main():
     global raspistillPID

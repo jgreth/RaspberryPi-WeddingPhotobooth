@@ -118,7 +118,7 @@ class MainPanel(wx.Panel):
     def updatePictureInner(self):
         print "Updating picture from " + threading.current_thread().name
 
-        twximg = wx.Image("./" + str(self.picturePath.data),wx.BITMAP_TYPE_JPEG)
+        twximg = wx.Image(str(self.picturePath.data),wx.BITMAP_TYPE_JPEG)
         bmp = twximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight).ConvertToBitmap()
 
         if self.pictureTakenCounter == 1:
@@ -225,6 +225,9 @@ class MainWindow(wx.Frame):
 
     def getReset(self):
         return self.panel.reset
+
+def miminButtonPress(state):
+         photoBoothPi2.mimicButtonPress(state)
 
 def startGUI():
     global mainFrame
