@@ -2,6 +2,7 @@
 
 #TODO:
 #   4- Upload picture to google album
+#   Have the script create the output folder
 
 import datetime
 from linkedList import *
@@ -19,6 +20,7 @@ import shutil
 import wx
 import gc
 from wx.lib.pubsub import Publisher
+import urllib2 
 
 pictureDelay = 3 #Seconds between each picture
 totalPictures = 4 # The total number of pictures that will be taken.
@@ -41,6 +43,7 @@ outputPath = "/media/KINGSTON/"
 currentTime = datetime.datetime.now()
 
 raspistillPID = "0"
+
 
 #GPIO Setup
 GPIO_RESET_PIN = 18
@@ -106,6 +109,7 @@ class CaptureThread(Thread):
         count = 0
         while True:
             if self.buttonPressed:
+                Publisher().sendMessage("hideBeginningText", "Nothing")
                 Publisher().sendMessage("reset", "Nothing")
                 print "Remember to Smile"
                 currentTime = datetime.datetime.now()
@@ -116,26 +120,26 @@ class CaptureThread(Thread):
                 while count != totalPictures:
                     print "Taking pictue " + str(count)
                     Publisher().sendMessage("startCountdown", str(count))
-                    sleep(0.5)
+                    sleep(0.8)
 
                     for i in range(0, pictureDelay):                        
                         #Do the Beep and update the GUI
                         os.system("aplay ./res/beep-07.wav")
                         sleep(1)
 
+                    #Turn on flash
+                    GPIO.output(GPIO_FLASH_PIN, False)
+                    
                     subprocess.call(['kill', '-USR1' , raspistillPID])
                     os.system("aplay ./res/camera-shutter-click-01.wav")
                     #sleep(0.25)
-
-                    #Turn on flash
-                    GPIO.output(GPIO_FLASH_PIN, False)
 
                     outputPictureName = newDirName + "/pic-" + str(count) + ".jpg"
                     subprocess.call(['mv',pictureName, outputPictureName])
 
                     count = count + 1
 
-                    sleep(2)
+                    sleep(.5)
 
                     #Turn off flash
                     GPIO.output(GPIO_FLASH_PIN, True)
@@ -144,7 +148,7 @@ class CaptureThread(Thread):
                     print "Publishing message to update picture from " + threading.current_thread().name
                     Publisher().sendMessage("update", outputPictureName)
 
-                    sleep(5)
+                    sleep(3)
 
                     #gc.collect()
                     
@@ -153,8 +157,9 @@ class CaptureThread(Thread):
                 monitorFolder(newDirName)
                 makeCollage()
                 Publisher().sendMessage("hideProcessingText", "Nothing")
+                Publisher().sendMessage("showBeginningText", "Nothing")
 
-                #Reset
+                #Reset for next picture
                 self.buttonPressed = False
                 count = 0
 
@@ -217,15 +222,17 @@ def makeCollage():
     global currentTime
     
     destination = "./raw"
-    fileName = outputPath + "/img"
+    fileName = outputPath + "/photoBoothOutput"
     current = imageList.selfHead()
     collageName = ""
+    tempName = ""
     while not imageList.isEmpty() and current != None:
         pic = current.getData()
         img.paste(pic,(int(current.getLocation()[0]),int(current.getLocation()[1])))          
         if current.getPosition() % 4 == 0 :
             photo += 1
-            collageName = fileName+ "/Photobooth_"+ currentTime.strftime("%H_%M_%S") + ".jpg"
+            tempName = "Photobooth_"+ currentTime.strftime("%H_%M_%S") + ".jpg"
+            collageName = fileName+ "/" + tempName
             img.save(collageName)
         shutil.move(current.getFileName(), destination)
         current = current.getNext()
@@ -235,12 +242,33 @@ def makeCollage():
     print "Calling showCollage from: " + threading.current_thread().name
     Publisher().sendMessage("showCollage", collageName)
     print "Collage created"
+    
+    if checkInternetConnection():
+        print "Uploading to DropBox: " + collageName + " to: " + tempName
+        dropboxThread = threading.Thread(target=sendToDropbox, args=[collageName, tempName])
+        dropboxThread.start()
 
-def mimicButtonPress(state):
-    captureThread.buttonPressed = state;
+def mimicButtonPress():
+    global captureThread
+    captureThread.buttonPressed = True;
+    
+def checkInternetConnection():
+    try:
+        response=urllib2.urlopen('http://74.125.228.100',timeout=1)
+        print "Connected to internet."
+        return True
+    except urllib2.URLError as err: pass
+    print "Not connected to internet."
+    return False  
+
+def sendToDropbox(fullFilePath, fileName):
+    command = "/home/pi/Photobooth/Dropbox-Uploader/dropbox_uploader.sh upload " + fullFilePath + " " + fileName
+    print "Uploading to Dropbox: " + command 
+    subprocess.call([command], shell=True)
 
 def main():
     global raspistillPID
+    global captureThread
     
     raspiThread = RaspiThread()
     raspiThread.setDaemon(True)

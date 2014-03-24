@@ -83,6 +83,10 @@ class MainPanel(wx.Panel):
         wxBmp =  wx.Image("res/processing.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
         self.processingText = wx.StaticBitmap(self,-1, wxBmp,(85,850))
         self.processingText.Hide()
+        
+        wxBmp =  wx.Image("res/begin.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
+        self.beginningText = wx.StaticBitmap(self,-1, wxBmp,(85,850))
+        self.beginningText.Show()
 
         photoBoothPi2.main()
 
@@ -178,6 +182,15 @@ class MainPanel(wx.Panel):
         print "Showing processing message..."
         self.processingText.Hide()
         
+    def showBeginningText(self, param):
+        print "Showing beginning message..."
+        self.beginningText.Show()
+
+
+    def hideBeginningText(self, param):
+        print "Showing beginning message..."
+        self.beginningText.Hide()        
+        
 class MainWindow(wx.Frame):
 
     showCollage = True
@@ -200,6 +213,8 @@ class MainWindow(wx.Frame):
         Publisher().subscribe(self.panel.startCountdown, "startCountdown")
         Publisher().subscribe(self.panel.showProcessingText, "showProcessingText")
         Publisher().subscribe(self.panel.hideProcessingText, "hideProcessingText")
+        Publisher().subscribe(self.panel.showBeginningText, "showBeginningText")
+        Publisher().subscribe(self.panel.hideBeginningText, "hideBeginningText")
 
         print "MainWindow thread: " + threading.current_thread().name
 
@@ -226,8 +241,8 @@ class MainWindow(wx.Frame):
     def getReset(self):
         return self.panel.reset
 
-def miminButtonPress(state):
-         photoBoothPi2.mimicButtonPress(state)
+def mimicButtonPress():
+         photoBoothPi2.mimicButtonPress()
 
 def startGUI():
     global mainFrame
