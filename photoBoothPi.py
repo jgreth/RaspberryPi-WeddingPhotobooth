@@ -150,8 +150,8 @@ class CaptureThread(Thread):
                     #sleep(0.25)
 
                     outputPictureName = newDirName + "/pic-" + str(count) + ".jpg"
-                    #subprocess.call(['cp',pictureName, outputPictureName])
-                    shutil.copy(pictureName, outputPictureName)
+                    subprocess.call(['cp',pictureName, outputPictureName])
+                    #shutil.copy(pictureName, outputPictureName)
 
                     count = count + 1
 
@@ -292,6 +292,7 @@ def main():
     raspiThread = RaspiThread()
     raspiThread.setDaemon(True)
     raspiThread.start()
+
 
     sleep(2)
 

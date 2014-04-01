@@ -1,38 +1,46 @@
 #!/usr/bin/env python
 
-#import photoBoothPi2 as pb
 import datetime
 from time import sleep
 import threading
+import sys
 
-import photoBoothGUI as gui
+#import photoBoothGUI as gui
+import photoBoothPiNew as gui
 
 
 def run():
-    print "Starting GUI"
+    print("Starting GUI")
     gui.startGUI()
 
 def runGUI():
-    print "Kicking off thread"
+    print("Kicking off thread")
     runThread = threading.Thread(target=run)
     runThread.start()
 
 def runTest():
-    print "Run test"
+    print("Run test")
     gui.mimicButtonPress()
     sleep(120)
 
 
 if __name__ == "__main__":    
-    #Main test execution
-    runGUI()
-    sleep(10)
-
-    count = 0
-
-    while(True):
-        print "Running test # " + str(count)
-        runTest()    
-        count += 1
+    try:
+        #Main test execution
+        runGUI()
+        sleep(10)
+    
+        count = 0
+    
+        while(count < 500):
+            print("\n\nRunning test # " + str(count)) + "\n\n"
+            runTest()    
+            count += 1
+        
+    except Exception as ex:
+        template = "An exception of type {0} occured. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print(message)
+        sys.exit()        
 
  

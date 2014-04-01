@@ -2,7 +2,8 @@
 
 import wx
 import os
-import photoBoothPi2
+import sys
+import photoBoothPi
 from wx.lib.pubsub import Publisher
 import threading
 from time import sleep
@@ -88,7 +89,7 @@ class MainPanel(wx.Panel):
         self.beginningText = wx.StaticBitmap(self,-1, wxBmp,(85,850))
         self.beginningText.Show()
 
-        photoBoothPi2.main()
+        photoBoothPi.main()
 
 
     def resetPanelInner(self):
@@ -171,7 +172,8 @@ class MainPanel(wx.Panel):
             self.countdownCounter = 0
             self.updateCountdownImage = False
             self.countdownImage.Hide()
-            #sleep(1)
+        
+        sleep(.1)
 
     def showProcessingText(self, param):
         print "Showing processing message..."
@@ -242,7 +244,7 @@ class MainWindow(wx.Frame):
         return self.panel.reset
 
 def mimicButtonPress():
-         photoBoothPi2.mimicButtonPress()
+         photoBoothPi.mimicButtonPress()
 
 def startGUI():
     global mainFrame
@@ -253,6 +255,8 @@ def startGUI():
 if __name__ == "__main__":
     try:
         startGUI()
-    except KeyboardInterrupt:
-        print "Exception caught"
+    except Exception as ex:
+        template = "An exception of type {0} occured. Arguments:\n{1!r}"
+        message = template.format(type(ex).__name__, ex.args)
+        print message
         sys.exit()
