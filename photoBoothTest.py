@@ -5,7 +5,6 @@ from time import sleep
 import threading
 import sys
 
-#import photoBoothGUI as gui
 import photoBoothPiNew as gui
 
 
@@ -28,7 +27,7 @@ if __name__ == "__main__":
     try:
         #Main test execution
         runGUI()
-        sleep(10)
+        sleep(8)
     
         count = 0
     

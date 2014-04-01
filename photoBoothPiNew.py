@@ -21,7 +21,6 @@ from wx.lib.pubsub import Publisher
 import urllib2 
 import resource
 
-import pdb
 
 pictureWidth = 2592
 pictureHeight = 1944
@@ -425,7 +424,7 @@ class MainPanel(wx.Panel):
         self.twximg = wx.Image(str(self.picturePath),wx.BITMAP_TYPE_JPEG)
         self.bmp = self.twximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight).ConvertToBitmap()
 
-        self.twximg.Destroy()
+        #self.twximg.Destroy()
         
         if self.pictureTakenCounter == 1:
             if self.picture1 is not None:
@@ -451,9 +450,10 @@ class MainPanel(wx.Panel):
                 self.picture4.Destroy()
                 
             self.picture4 = wx.StaticBitmap(self,-1, self.bmp,(self.takenPictureLeftOffset,795))
+            self.showProcessingText()
             print("updatePicturePanel - 4 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
-        self.bmp.Destroy()
+        #self.bmp.Destroy()
         
         print("Completed updating picture")
         print("updatePicturePanel - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
@@ -502,8 +502,7 @@ class MainPanel(wx.Panel):
             self.countdownImage.Hide()
             #Stop the countdown process
             self.updateCountdownImage = False 
-            threading.Thread(target=self.takePicture).start()
-            #self.takePicture()
+            self.takePicture()
             
     def takePicture(self):
         
@@ -537,10 +536,14 @@ class MainPanel(wx.Panel):
         self.updatePicturePanel(outputPictureName)
             
         if self.pictureTakenCounter == 4:
+            
+            #Publisher().sendMessage("showProcessingText", "Nothing")
             #Stop the countdown process
             self.updateCountdownImage = False      
             print("Picture capture complete")
-            self.showProcessingText("")
+            
+            sleep(1)
+            #self.showProcessingText("")
             monitorFolder(self.newDirName)
             makeCollage()
             self.hideProcessingText("")
