@@ -98,7 +98,6 @@ class GPIOThread(Thread):
         
         #Play sound
         p = subprocess.Popen(["aplay", "./res/smw_1-up.wav"])
-        p.kill()
         
         Publisher().sendMessage("hideBeginningText", "Nothing")
         Publisher().sendMessage("reset", "Nothing")
@@ -182,6 +181,7 @@ def makeCollage():
     current = imageList.selfHead()
     collageName = ""
     tempName = ""
+    
     while not imageList.isEmpty() and current != None:
         pic = current.getData()
         img.paste(pic,(int(current.getLocation()[0]),int(current.getLocation()[1])))          
@@ -190,13 +190,12 @@ def makeCollage():
             tempName = "Photobooth_"+ currentTime.strftime("%H_%M_%S") + ".jpg"
             collageName = fileName+ "/" + tempName
             img.save(collageName)
-        shutil.move(current.getFileName(), destination)
+        #shutil.move(current.getFileName(), destination)
+        subprocess.call(["mv", current.getFileName(), destination])
         current = current.getNext()
     
-    print("makeCollage - Before New List - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)   
     imageList = LinkedList() 
-    print("makeCollage - After New List - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-
+    
     #Send message to GUI thread
     print("Calling showCollage from: " + threading.current_thread().name)
     Publisher().sendMessage("showCollage", collageName)
@@ -327,7 +326,6 @@ class MainPanel(wx.Panel):
         self.frame = parent
         
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
-        #self.resetPanelInner()
 
         self.initCountdownTimerImage()
 
@@ -349,6 +347,8 @@ class MainPanel(wx.Panel):
         self.picture4 = wx.StaticBitmap(self)
         
         self.countdownImage = wx.StaticBitmap(self)
+        
+        self.resetPanelInner()
         
         
         #Start of the main application
@@ -527,10 +527,12 @@ class MainPanel(wx.Panel):
         #Turn off flash
         GPIO.output(GPIO_FLASH_PIN, True)
         
-        sleep(2)
+        sleep(3)
 
         outputPictureName = self.newDirName + "/pic-" + str(self.pictureTakenCounter) + ".jpg"
-        shutil.copy(pictureName, outputPictureName)
+        #shutil.move(pictureName, outputPictureName)
+        subprocess.call(["cp", pictureName, outputPictureName])
+        #os.system("touch " + pictureName)
 
         #Send message to GUI thread
         self.updatePicturePanel(outputPictureName)
