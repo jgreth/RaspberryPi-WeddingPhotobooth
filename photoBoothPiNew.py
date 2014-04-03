@@ -71,6 +71,7 @@ class GPIOThread(Thread):
         while True:
             inputValue = GPIO.input(GPIO_INPUT_PIN)
             if inputValue == True and (not self.busy):
+                self.busy = True
                 print("Button Pressed")
                 self.beginPictureCapture()
             
@@ -187,6 +188,7 @@ def makeCollage():
         img.paste(pic,(int(current.getLocation()[0]),int(current.getLocation()[1])))          
         if current.getPosition() % 4 == 0 :
             photo += 1
+            currentTime = datetime.datetime.now()
             tempName = "Photobooth_"+ currentTime.strftime("%H_%M_%S") + ".jpg"
             collageName = fileName+ "/" + tempName
             img.save(collageName)
@@ -226,7 +228,6 @@ def sendToDropbox(fullFilePath, fileName):
     command = "/home/pi/Photobooth/Dropbox-Uploader/dropbox_uploader.sh upload " + fullFilePath + " " + fileName
     print("Uploading to Dropbox: " + command)
     p = subprocess.Popen([command], shell=True)
-    p.kill()
     print("sendToDropbox - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) 
 
 def main():
@@ -423,8 +424,6 @@ class MainPanel(wx.Panel):
         
         self.twximg = wx.Image(str(self.picturePath),wx.BITMAP_TYPE_JPEG)
         self.bmp = self.twximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight).ConvertToBitmap()
-
-        #self.twximg.Destroy()
         
         if self.pictureTakenCounter == 1:
             if self.picture1 is not None:
@@ -453,8 +452,6 @@ class MainPanel(wx.Panel):
             self.showProcessingText()
             print("updatePicturePanel - 4 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
-        #self.bmp.Destroy()
-        
         print("Completed updating picture")
         print("updatePicturePanel - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         print("Child count Exit: " + str(len(self.GetChildren())))    
@@ -496,6 +493,7 @@ class MainPanel(wx.Panel):
             self.countdownCounter += 1
             sleep(1)
             threading.Thread(target=self.playSound,args=["./res/beep-07.wav"]).start()
+            #p = subprocess.Popen(["aplay", "./res/beep-07.wav"])
             
         else:
             self.countdownCounter = 0
@@ -515,7 +513,6 @@ class MainPanel(wx.Panel):
         GPIO.output(GPIO_FLASH_PIN, False)
                     
         #Play photo sound
-        #os.system("aplay ./res/camera-shutter-click-01.wav")
         p = subprocess.Popen(["aplay", "./res/camera-shutter-click-01.wav"])
                
         #Take picture
@@ -527,28 +524,25 @@ class MainPanel(wx.Panel):
         #Turn off flash
         GPIO.output(GPIO_FLASH_PIN, True)
         
-        sleep(3)
+        #TODO is this needed
+        #sleep(3)
 
         outputPictureName = self.newDirName + "/pic-" + str(self.pictureTakenCounter) + ".jpg"
-        #shutil.move(pictureName, outputPictureName)
         subprocess.call(["cp", pictureName, outputPictureName])
-        #os.system("touch " + pictureName)
 
         #Send message to GUI thread
         self.updatePicturePanel(outputPictureName)
             
         if self.pictureTakenCounter == 4:
             
-            #Publisher().sendMessage("showProcessingText", "Nothing")
+            Publisher().sendMessage("showProcessingText", "Nothing")
             #Stop the countdown process
             self.updateCountdownImage = False      
             print("Picture capture complete")
             
             sleep(1)
-            #self.showProcessingText("")
             monitorFolder(self.newDirName)
             makeCollage()
-            self.hideProcessingText("")
 
             wx.FutureCall(18000, self.showBeginningText)
 
@@ -568,8 +562,12 @@ class MainPanel(wx.Panel):
         self.processingText.Hide()
         
     def showBeginningText(self, param=""):
+        self.hideProcessingText("")
         print("Showing beginning message...")
         self.beginningText.Show()
+        
+        #This will allow the application to respond to the button
+        Publisher().sendMessage("finished", "")
 
     def hideBeginningText(self, param=""):
         print("Hiding beginning message...")
