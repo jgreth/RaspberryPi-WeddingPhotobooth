@@ -3,7 +3,7 @@
 import wx
 import os
 import sys
-from wx.lib.pubsub import Publisher
+from wx.lib.pubsub import pub as Publisher
 import threading
 from time import sleep
 import datetime
@@ -17,7 +17,6 @@ import Image
 import shutil
 import wx
 import gc
-from wx.lib.pubsub import Publisher
 import urllib2 
 import resource
 
