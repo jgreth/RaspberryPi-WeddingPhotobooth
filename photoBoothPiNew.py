@@ -31,7 +31,8 @@ collageReducedPictureSize = reducedHeight, reducedWidth
 pictureName= "photoBoothPic.jpg"
 imageList = LinkedList()
 photo = 0
-img = Image.open("./res/photoboothlayout.jpg")
+
+img = Image.open(os.getcwd() + "/res/photoboothlayout.jpg")
 
 outputPath = "/media/KINGSTON/"
 
