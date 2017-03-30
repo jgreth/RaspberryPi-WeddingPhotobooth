@@ -11,7 +11,7 @@ from linkedList import *
 import subprocess
 import shlex
 from threading import Thread
-import RPIO as GPIO
+
 import signal
 import Image
 import shutil
@@ -20,6 +20,10 @@ import gc
 import urllib2 
 import resource
 
+with open('/sys/firmware/devicetree/base/model', 'r') as f:
+    first_line = f.readline()
+    if (("Raspberry Pi 3" not in first_line) or ("Raspberry Pi 2" not in first_line)):
+		import RPIO as GPIO
 
 pictureWidth = 2592
 pictureHeight = 1944
@@ -56,9 +60,10 @@ GPIO.output(GPIO_FLASH_PIN, True)
 os.system("sudo amixer cset numid=3 2")
 
 class GPIOThread(Thread):
-    #This thread is in charge of handling the button presses to trigger
-    #the capturing of the pictures, reset button and eventually control the flash also.
-
+    '''
+    This thread is in charge of handling the button presses to trigger
+    the capturing of the pictures, reset button and eventually control the flash also.
+	''''
     def __init__(self):
         Thread.__init__(self)
         self.busy = False
