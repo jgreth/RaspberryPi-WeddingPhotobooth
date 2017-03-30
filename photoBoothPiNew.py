@@ -20,10 +20,8 @@ import gc
 import urllib2 
 import resource
 
-with open('/sys/firmware/devicetree/base/model', 'r') as f:
-    first_line = f.readline()
-    if (("Raspberry Pi 3" not in first_line) or ("Raspberry Pi 2" not in first_line)):
-		import RPIO as GPIO
+from picamera import PiCamera
+import RPi.GPIO as GPIO
 
 pictureWidth = 2592
 pictureHeight = 1944
@@ -42,7 +40,8 @@ outputPath = "/media/KINGSTON/"
 
 currentTime = datetime.datetime.now()
 
-raspistillPID = "0"
+#raspistillPID = "0"\
+camera = PiCamera()
 
 #GPIO Setup
 GPIO.cleanup() 
@@ -63,7 +62,7 @@ class GPIOThread(Thread):
     '''
     This thread is in charge of handling the button presses to trigger
     the capturing of the pictures, reset button and eventually control the flash also.
-	''''
+    '''
     def __init__(self):
         Thread.__init__(self)
         self.busy = False
@@ -118,7 +117,12 @@ class GPIOThread(Thread):
         
 
 class RaspiThread(Thread):
-    #This thread launches the camera feed
+    '''
+    This thread launches the camera feed
+    '''
+
+
+    camera = PiCamera()
     def __init__(self):
         Thread.__init__(self)
 
@@ -230,21 +234,21 @@ def checkInternetConnection():
 
 def sendToDropbox(fullFilePath, fileName):
     print("sendToDropbox - Start -  Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) 
-    command = "/home/pi/Photobooth/Dropbox-Uploader/dropbox_uploader.sh upload " + fullFilePath + " " + fileName
+    command = "./dropbox_uploader.sh upload " + fullFilePath + " " + fileName
     print("Uploading to Dropbox: " + command)
     p = subprocess.Popen([command], shell=True)
     print("sendToDropbox - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) 
 
 def main():
-    global raspistillPID
+    #global raspistillPID
     global gpioThread #Need for test script, to mimic button press
+    global camera
     
-    raspiThread = RaspiThread()
-    raspiThread.setDaemon(True)
-    raspiThread.start()
-
-    sleep(2)
-
+    camera.resolution = (str(pictureWidth),str(pictureHeight))
+    camera.preview.window =("85,118,800,600")
+       
+    camera.start_preview()
+    '''Using the Pi Camera API, we dont need to get the process id
     #Get raspistill process id, needed to tell camera to capture picture
     proc1 = subprocess.Popen(shlex.split('ps t'),stdout=subprocess.PIPE)
     proc2 = subprocess.Popen(shlex.split('grep raspistill'),stdin=proc1.stdout,
@@ -259,7 +263,8 @@ def main():
     proc2.stdout.close()
 
     print("raspistill pid = " + raspistillPID)
-
+    '''
+    
     gpioThread = GPIOThread()
     gpioThread.setDaemon(True)
     gpioThread.start()
@@ -509,7 +514,8 @@ class MainPanel(wx.Panel):
             
     def takePicture(self):
         
-        global raspistillPID
+        #TODO: Not needed
+        #global raspistillPID
         
         print ("takePicture - 6 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
@@ -521,8 +527,9 @@ class MainPanel(wx.Panel):
         p = subprocess.Popen(["aplay", "./res/camera-shutter-click-01.wav"])
                
         #Take picture
-        subprocess.call(['kill', '-USR1' , raspistillPID])
-        print ("Sending kill command to " + raspistillPID)
+        #TODO: Need to use Camera api to capture picture
+        #subprocess.call(['kill', '-USR1' , raspistillPID])
+        #print ("Sending kill command to " + raspistillPID)
 
         sleep(1)
 
@@ -630,6 +637,9 @@ def startGUI():
 
 if __name__ == "__main__":
     try:
+        with open('/sys/firmware/devicetree/base/model', 'r') as f:
+            first_line = f.readline()
+            print("Running on " + first_line)
         startGUI()
     except Exception as ex:
         template = "An exception of type {0} occured. Arguments:\n{1!r}"
