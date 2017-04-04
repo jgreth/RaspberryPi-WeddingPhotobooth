@@ -14,7 +14,8 @@ out,err=proc2.communicate()
 print out
 
 for line in out:
-    processId = out.split(" ")
+    processId = out.split(" ")[1]
     #print line
+    #print processId
     
 proc2.stdout.close() # Allow proc1 to receive a SIGPIPE if proc2 exits.    

@@ -44,7 +44,7 @@ currentTime = datetime.datetime.now()
 camera = PiCamera()
 
 #GPIO Setup
-GPIO.cleanup() 
+#GPIO.cleanup() 
 GPIO_RESET_PIN = 18
 GPIO_INPUT_PIN = 24
 GPIO_FLASH_PIN = 25
@@ -67,7 +67,7 @@ class GPIOThread(Thread):
         Thread.__init__(self)
         self.busy = False
         
-        Publisher().subscribe(self.finished, "finished")
+        Publisher.subscribe(self.finished, "finished")
 
     def run(self): 
         resetShutdownCounter = 0
@@ -102,35 +102,19 @@ class GPIOThread(Thread):
         print("beginPictureCapture - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
         #Play sound
-        p = subprocess.Popen(["aplay", "./res/smw_1-up.wav"])
+        p = subprocess.Popen(["aplay", os.getcwd() + "/res/smw_1-up.wav"])
         
-        Publisher().sendMessage("hideBeginningText", "Nothing")
-        Publisher().sendMessage("reset", "Nothing")
+        Publisher.sendMessage("hideBeginningText", "Nothing")
+        Publisher.sendMessage("reset", "Nothing")
         print("Remember to Smile")
         currentTime = datetime.datetime.now()
         self.newDirName = outputPath + str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
         os.mkdir(self.newDirName)
         subprocess.call(['chmod', '777', self.newDirName])   
-        Publisher().sendMessage("startCountdown", self.newDirName)
+        Publisher.sendMessage("startCountdown", self.newDirName)
         
         print("beginPictureCapture - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
-
-class RaspiThread(Thread):
-    '''
-    This thread launches the camera feed
-    '''
-
-
-    camera = PiCamera()
-    def __init__(self):
-        Thread.__init__(self)
-
-    def run(self):
-        print("Running raspitstill from " + threading.current_thread().name)
-        raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "-p", "85,118,800,600", '-v', "-q", "100", "-fp"] 
-        #raspiInitCommand = ['raspistill', '-o', pictureName, '-t', '0', '-s', '-w' , str(pictureWidth), "-h", str(pictureHeight), "--fullpreview", '-v'] 
-        subprocess.call(raspiInitCommand)
         
 def addPicture(fileName, location):
     global imageList
@@ -209,7 +193,7 @@ def makeCollage():
     
     #Send message to GUI thread
     print("Calling showCollage from: " + threading.current_thread().name)
-    Publisher().sendMessage("showCollage", collageName)
+    Publisher.sendMessage("showCollage", collageName)
     print("Collage created")
     
     if checkInternetConnection():
@@ -241,13 +225,15 @@ def sendToDropbox(fullFilePath, fileName):
 
 def main():
     #global raspistillPID
-    global gpioThread #Need for test script, to mimic button press
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   #Need for test script, to mimic button press
     global camera
     
-    camera.resolution = (str(pictureWidth),str(pictureHeight))
-    camera.preview.window =("85,118,800,600")
+    #camera.resolution = (str(pictureWidth),str(pictureHeight))
+    
        
     camera.start_preview()
+    camera.preview.fullscreen = False
+    camera.preview.window =(85,118,800,600)
     '''Using the Pi Camera API, we dont need to get the process id
     #Get raspistill process id, needed to tell camera to capture picture
     proc1 = subprocess.Popen(shlex.split('ps t'),stdout=subprocess.PIPE)
@@ -265,9 +251,9 @@ def main():
     print("raspistill pid = " + raspistillPID)
     '''
     
-    gpioThread = GPIOThread()
-    gpioThread.setDaemon(True)
-    gpioThread.start()
+    #gpioThread = GPIOThread()
+    #gpioThread.setDaemon(True)
+    #gpioThread.start()
 
 
 class PhotoBoothApp(wx.App):
@@ -333,20 +319,28 @@ class MainPanel(wx.Panel):
     
     def __init__(self, parent):
         wx.Panel.__init__(self,parent=parent)
-        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+        
+        #04032017 - Had to remove this line for it to work with the new version of wxPython 2.9+
+        #self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+        
         self.frame = parent
         
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
+        
+        print "App Path: " + os.getcwd() + "/res/photoboothappbackground.jpg"
+        loc = wx.Bitmap(os.getcwd() + "/res/photoboothappbackground.jpg")
+        dc = wx.ClientDC(self)
+        dc.DrawBitmap(loc, 0, 0)
 
         self.initCountdownTimerImage()
 
-        self.wxBmp =  wx.Image("res/processing.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
+        self.wxBmp =  wx.Image(os.getcwd() + "/res/processing.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
         self.processingText = wx.StaticBitmap(self,-1, self.wxBmp,(85,850))
         self.processingText.Hide()
         
         self.wxBmp.Destroy()
         
-        self.wxBmp =  wx.Image("res/begin.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
+        self.wxBmp =  wx.Image(os.getcwd() + "/res/begin.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
         self.beginningText = wx.StaticBitmap(self,-1, self.wxBmp,(85,850))
         self.beginningText.Show()
         
@@ -365,7 +359,7 @@ class MainPanel(wx.Panel):
         #Start of the main application
         main()
         
-        Publisher().subscribe(self.playSound, "playSound")
+        Publisher.subscribe(self.playSound, "playSound")
         
         self.mainPanelWxObjectCount = len(self.GetChildren())
         print "Initial Panel Children Count: " + str(self.mainPanelWxObjectCount)
@@ -373,7 +367,7 @@ class MainPanel(wx.Panel):
 
     def resetPanelInner(self):
         
-        self.wximg = wx.Image("res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
+        self.wximg = wx.Image(os.getcwd() + "/res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
         
         if self.picture1 is not None:
@@ -383,7 +377,7 @@ class MainPanel(wx.Panel):
         self.wximg.Destroy()
         self.wxbmp.Destroy()
 
-        self.wximg = wx.Image("res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
+        self.wximg = wx.Image(os.getcwd() + "/res/blankPicture2.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
         
         if self.picture2 is not None:
@@ -393,7 +387,7 @@ class MainPanel(wx.Panel):
         self.wximg.Destroy()
         self.wxbmp.Destroy()
 
-        self.wximg = wx.Image("res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
+        self.wximg = wx.Image(os.getcwd() + "/res/blankPicture3.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
                 
         if self.picture3 is not None:
@@ -403,7 +397,7 @@ class MainPanel(wx.Panel):
         self.wximg.Destroy()
         self.wxbmp.Destroy()
 
-        self.wximg = wx.Image("res/blankPicture4.jpg",wx.BITMAP_TYPE_JPEG)
+        self.wximg = wx.Image(os.getcwd() + "/res/blankPicture4.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
         
         if self.picture4 is not None:
@@ -419,7 +413,7 @@ class MainPanel(wx.Panel):
         self.reset = True
 
     def onEraseBackground(self, evt):
-        loc = wx.Bitmap("res/photoboothappbackground.jpg")
+        loc = wx.Bitmap(os.getcwd() + "/res/photoboothappbackground.jpg")
         dc = wx.ClientDC(self)
         dc.DrawBitmap(loc, 0, 0)
 
@@ -468,15 +462,15 @@ class MainPanel(wx.Panel):
 
     def initCountdownTimerImage(self):
         
-        self.wximg = wx.Image("res/countdown3.jpg",wx.BITMAP_TYPE_JPEG)
+        self.wximg = wx.Image(os.getcwd() + "/res/countdown3.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
         self.countdownImages.append(self.wxbmp)
 
-        self.wximg = wx.Image("res/countdown2.jpg",wx.BITMAP_TYPE_JPEG)
+        self.wximg = wx.Image(os.getcwd() + "/res/countdown2.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
         self.countdownImages.append(self.wxbmp)
 
-        self.wximg = wx.Image("res/countdown1.jpg",wx.BITMAP_TYPE_JPEG)
+        self.wximg = wx.Image(os.getcwd() + "/res/countdown1.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
         self.countdownImages.append(self.wxbmp)  
         
@@ -502,7 +496,7 @@ class MainPanel(wx.Panel):
             self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.countdownCounter],(1025,100))
             self.countdownCounter += 1
             sleep(1)
-            threading.Thread(target=self.playSound,args=["./res/beep-07.wav"]).start()
+            threading.Thread(target=self.playSound,args=[os.getcwd() + "/res/beep-07.wav"]).start()
             #p = subprocess.Popen(["aplay", "./res/beep-07.wav"])
             
         else:
@@ -517,6 +511,8 @@ class MainPanel(wx.Panel):
         #TODO: Not needed
         #global raspistillPID
         
+        global camera
+        
         print ("takePicture - 6 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
         sleep(1.5)
@@ -524,20 +520,15 @@ class MainPanel(wx.Panel):
         GPIO.output(GPIO_FLASH_PIN, False)
                     
         #Play photo sound
-        p = subprocess.Popen(["aplay", "./res/camera-shutter-click-01.wav"])
+        p = subprocess.Popen(["aplay", os.getcwd() + "/res/camera-shutter-click-01.wav"])
                
         #Take picture
-        #TODO: Need to use Camera api to capture picture
-        #subprocess.call(['kill', '-USR1' , raspistillPID])
-        #print ("Sending kill command to " + raspistillPID)
+        camera.capture(pictureName)
 
         sleep(1)
 
         #Turn off flash
         GPIO.output(GPIO_FLASH_PIN, True)
-        
-        #TODO is this needed
-        #sleep(3)
 
         outputPictureName = self.newDirName + "/pic-" + str(self.pictureTakenCounter) + ".jpg"
         subprocess.call(["cp", pictureName, outputPictureName])
@@ -547,7 +538,7 @@ class MainPanel(wx.Panel):
             
         if self.pictureTakenCounter == 4:
             
-            Publisher().sendMessage("showProcessingText", "Nothing")
+            Publisher.sendMessage("showProcessingText", "Nothing")
             #Stop the countdown process
             self.updateCountdownImage = False      
             print("Picture capture complete")
@@ -579,7 +570,7 @@ class MainPanel(wx.Panel):
         self.beginningText.Show()
         
         #This will allow the application to respond to the button
-        Publisher().sendMessage("finished", "")
+        Publisher.sendMessage("finished", "")
 
     def hideBeginningText(self, param=""):
         print("Hiding beginning message...")
@@ -595,13 +586,13 @@ class MainWindow(wx.Frame):
 
         self.ShowFullScreen(True)
 
-        Publisher().subscribe(self.showCollage, "showCollage")
-        Publisher().subscribe(self.panel.resetPanel, "reset")
-        Publisher().subscribe(self.panel.startCountdown, "startCountdown")
-        Publisher().subscribe(self.panel.showProcessingText, "showProcessingText")
-        Publisher().subscribe(self.panel.hideProcessingText, "hideProcessingText")
-        Publisher().subscribe(self.panel.showBeginningText, "showBeginningText")
-        Publisher().subscribe(self.panel.hideBeginningText, "hideBeginningText")
+        Publisher.subscribe(self.showCollage, "showCollage")
+        Publisher.subscribe(self.panel.resetPanel, "reset")
+        Publisher.subscribe(self.panel.startCountdown, "startCountdown")
+        Publisher.subscribe(self.panel.showProcessingText, "showProcessingText")
+        Publisher.subscribe(self.panel.hideProcessingText, "hideProcessingText")
+        Publisher.subscribe(self.panel.showBeginningText, "showBeginningText")
+        Publisher.subscribe(self.panel.hideBeginningText, "hideBeginningText")
 
         print("MainWindow thread: " + threading.current_thread().name)
 
@@ -630,7 +621,7 @@ class MainWindow(wx.Frame):
         return self.panel.reset
 
 def startGUI():
-    global mainFrame
+    #global mainFrame
     app = PhotoBoothApp()
 
     app.MainLoop()
