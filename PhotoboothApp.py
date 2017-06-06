@@ -13,10 +13,12 @@ import Image
 from linkedList import *
 import datetime
 import urllib2
+import gc
+
 
 #Photobooth Imports
 import GPIOThread
-import CollageFrame
+import CollageFrame as collage
 
 reducedHeight = 430
 reducedWidth = 322
@@ -404,7 +406,7 @@ class MainPanel(wx.Panel):
 
     def checkInternetConnection(self):
         try:
-            response=urllib2.urlopen('http://74.125.228.100',timeout=1)
+            response=urllib2.urlopen('http://8.8.8.8',timeout=1) #Google DNS
             print("Connected to internet.")
             return True
         except urllib2.URLError as err: pass
@@ -432,7 +434,7 @@ class MainPanel(wx.Panel):
         self.beginningText.Show()
         
         #This will allow the application to respond to the button
-        Publisher.sendMessage("object.finished", data=0)
+        Publisher.sendMessage("object.finished", param="")
 
     def hideBeginningText(self, param=""):
         print("Hiding beginning message...")
@@ -463,7 +465,7 @@ class MainWindow(wx.Frame):
     def showCollageInner(self):
         print("showCollageInner - 8 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         print("Showing collage from GUI")
-        collageWindow = CollageFrame(self.collagePath)
+        collageWindow = collage.CollageFrame(self.collagePath)
         collageWindow.Show()
 
         #Show picture for 15 seconds and close down
