@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import resource
+import wx
 
 class CollageFrame(wx.Frame):
     def __init__(self, collagePath):  

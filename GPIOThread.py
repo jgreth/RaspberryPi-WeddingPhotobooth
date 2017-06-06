@@ -3,6 +3,10 @@
 import RPi.GPIO as GPIO
 from threading import Thread
 from wx.lib.pubsub import pub as Publisher
+import resource
+import subprocess
+import os
+import datetime
 
 
 #GPIO Setup
@@ -22,11 +26,15 @@ class GPIOThread(Thread):
     This thread is in charge of handling the button presses to trigger
     the capturing of the pictures, reset button and eventually control the flash also.
     '''
-    def __init__(self):
+    def __init__(self, outputPath):
         Thread.__init__(self)
         self.busy = False
+        self.outputPath = outputPath
         
-        Publisher.subscribe(self.finished, "finished")
+        Publisher.subscribe(self.finished, "object.finished")
+        
+    def setCamera(self, camera):
+        self.camera = camera
 
     def run(self): 
         resetShutdownCounter = 0
@@ -63,14 +71,17 @@ class GPIOThread(Thread):
         #Play sound
         p = subprocess.Popen(["aplay", os.getcwd() + "/res/smw_1-up.wav"])
         
-        Publisher.sendMessage("hideBeginningText", "Nothing")
-        Publisher.sendMessage("reset", "Nothing")
+        #Publisher.sendMessage("hideBeginningText", "Nothing")
+        #Publisher.sendMessage("reset", "Nothing")
+        Publisher.sendMessage("object.hideBeginningText")
+        Publisher.sendMessage("object.reset", msg="")
         print("Remember to Smile")
         currentTime = datetime.datetime.now()
-        self.newDirName = outputPath + str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
+        print("Output path: " + self.outputPath)
+        self.newDirName = self.outputPath + str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
         os.mkdir(self.newDirName)
         subprocess.call(['chmod', '777', self.newDirName])   
-        Publisher.sendMessage("startCountdown", self.newDirName)
+        Publisher.sendMessage("object.startCountdown",param=self.newDirName)
         
         print("beginPictureCapture - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
