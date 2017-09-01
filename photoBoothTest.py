@@ -5,7 +5,7 @@ from time import sleep
 import threading
 import sys
 
-import photoBoothPiNew as gui
+import photoBoothPi as gui
 
 
 def run():

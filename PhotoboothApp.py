@@ -122,7 +122,15 @@ class MainPanel(wx.Panel):
         
         
         #Start of the main application
-        #main()
+        '''
+        self.camera.start_preview()
+        self.camera.preview.fullscreen = False
+        self.camera.preview.window =(85,50,800,800)
+    
+        gpioThread.setDaemon(True)
+        gpioThread.setCamera(camera)
+        gpioThread.start()
+        '''
         
         Publisher.subscribe(self.playSound, "object.playSound")
         
@@ -132,6 +140,7 @@ class MainPanel(wx.Panel):
 
     def resetPanelInner(self):
         
+        #TODO: Need to see if these Bitmaps can be converted once and saved off in the class
         self.wximg = wx.Image(os.getcwd() + "/res/blankPicture1.jpg",wx.BITMAP_TYPE_JPEG)
         self.wxbmp = wx.BitmapFromImage(self.wximg)
         
@@ -273,6 +282,9 @@ class MainPanel(wx.Panel):
             self.takePicture()
             
     def takePicture(self):
+        
+        global reducedHeight
+        global reducedWidth
                 
         print ("takePicture - 6 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
@@ -284,7 +296,7 @@ class MainPanel(wx.Panel):
         p = subprocess.Popen(["aplay", os.getcwd() + "/res/camera-shutter-click-01.wav"])
                
         #Take picture
-        self.camera.capture(self.pictureName)
+        self.camera.capture(self.pictureName, resize=(reducedHeight, reducedWidth))
 
         sleep(1)
 
@@ -351,8 +363,9 @@ class MainPanel(wx.Panel):
       
     def addPicture(self, fileName, location):
         global imageList
-        self.resizePicture(fileName)
-        imageList.add(fileName + "_collage",location)
+        #self.resizePicture(fileName)
+        #imageList.add(fileName + "_collage",location)
+        imageList.add(fileName, location)
         print("Added " + fileName + " to " + location)
  
     def resizePicture(self, imagePath):

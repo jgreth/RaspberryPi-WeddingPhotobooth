@@ -3,6 +3,8 @@
 import os
 import subprocess
 
-command = "export DISPLAY=:0;cd /home/pi/Photobooth;sudo ./photoBoothPiNew.py"
+#Old command
+#command = "export DISPLAY=:0;cd /home/pi/Photobooth;sudo ./photoBoothPi.py"
+command = "sudo python ./photoBoothPi.py"
 
 os.system(command)
