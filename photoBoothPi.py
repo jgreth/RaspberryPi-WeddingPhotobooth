@@ -18,6 +18,8 @@ import wx
 import gc
 import resource
 
+import json
+
 from picamera import PiCamera
 
 #Photobooth App Imports
@@ -28,15 +30,11 @@ import PhotoboothApp as pbApp
 pictureWidth = 2592
 pictureHeight = 1944
 
-#outputPath = "/media/KINGSTON/"
-outputPath = "/tmp/"
-os.system("mkdir " + outputPath + "photoBoothOutput")
-
 currentTime = datetime.datetime.now()
 
 camera = PiCamera()
 
-gpioThread = gpio.GPIOThread(outputPath)
+
 
 #Configure sound TODO may want to move this to be set at login in the user profile type file
 os.system("sudo amixer cset numid=3 2")
@@ -47,28 +45,43 @@ def mimicButtonPress():
 
 
 def main():
-    #global raspistillPID
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #Need for test script, to mimic button press
     global camera
     global gpioThread
     
-    #camera.resolution = (str(pictureWidth),str(pictureHeight))
+    configurationData = loadJson()
+    configuration = configurationData['configuration']
+    previewWindow = configurationData['previewWindow']
+    pictureSize = configurationData['pictureSize']
+    
+    camera.resolution = (pictureSize['width'],pictureSize['height'])
   
     camera.start_preview()
     camera.preview.fullscreen = False
-    camera.preview.window =(85,50,1200,600)
+    camera.preview.window =(previewWindow['X'],previewWindow['Y'],previewWindow['height'],previewWindow['width'])
     
+    #outputPath = "/media/KINGSTON/"
+    outputPath = configuration['outputDirectory']
+    os.system("mkdir " + outputPath + "photoBoothOutput")
+    gpioThread = gpio.GPIOThread(outputPath)
     gpioThread.setDaemon(True)
     gpioThread.setCamera(camera)
     gpioThread.start()
 
 def startGUI():
-    #global mainFrame
+    '''Starts the GUI'''
     app = pbApp.PhotoBoothApp(camera, outputPath)
     
     main()
 
     app.MainLoop()
+    
+def loadJson():
+    '''Reads in the configuraiton json file that has the applications parameters'''
+    fileContent = file("./configuration.json", "r")
+    jsonFile = json.load(fileContent)
+    
+    return jsonFile
 
 if __name__ == "__main__":
     try:
@@ -76,6 +89,7 @@ if __name__ == "__main__":
             first_line = f.readline()
             print("Running on " + first_line)  
         global gpioThread #Need for test script, to mimic button press
+        
         startGUI()
     except Exception as ex:
         template = "An exception of type {0} occured. Arguments:\n{1!r}"
