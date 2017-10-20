@@ -120,18 +120,6 @@ class MainPanel(wx.Panel):
         
         self.resetPanelInner()
         
-        
-        #Start of the main application
-        '''
-        self.camera.start_preview()
-        self.camera.preview.fullscreen = False
-        self.camera.preview.window =(85,50,800,800)
-    
-        gpioThread.setDaemon(True)
-        gpioThread.setCamera(camera)
-        gpioThread.start()
-        '''
-        
         Publisher.subscribe(self.playSound, "object.playSound")
         
         self.mainPanelWxObjectCount = len(self.GetChildren())

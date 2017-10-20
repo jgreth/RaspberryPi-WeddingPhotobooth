@@ -19,6 +19,7 @@ import gc
 import resource
 
 import json
+import logging
 
 from picamera import PiCamera
 
@@ -32,24 +33,27 @@ pictureHeight = 1944
 
 currentTime = datetime.datetime.now()
 
-camera = PiCamera()
-
 
 
 #Configure sound TODO may want to move this to be set at login in the user profile type file
 os.system("sudo amixer cset numid=3 2")
 
 def mimicButtonPress():
+    '''This operation mimics a "hardware" button press
+    Function is used for testing purposes only'''
     global gpioThread
     gpioThread.beginPictureCapture()
 
 
-def main():
+def main(configurationData, camera):
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #Need for test script, to mimic button press
-    global camera
     global gpioThread
     
-    configurationData = loadJson()
+    logger = logging.getLogger('logs/photobooth.log')
+    logger.setLevel(logging.DEBUG)
+    
+    logger.debug("Inside photoBoothPi main operation")
+    
     configuration = configurationData['configuration']
     previewWindow = configurationData['previewWindow']
     pictureSize = configurationData['pictureSize']
@@ -58,9 +62,11 @@ def main():
   
     camera.start_preview()
     camera.preview.fullscreen = False
-    camera.preview.window =(previewWindow['X'],previewWindow['Y'],previewWindow['height'],previewWindow['width'])
+    #camera.preview.window =(previewWindow['X'],previewWindow['Y'],previewWindow['height'],previewWindow['width'])
+    camera.preview.window =(previewWindow['X'],previewWindow['Y'],pictureSize['height'],pictureSize['width'])
     
-    #outputPath = "/media/KINGSTON/"
+    
+    #outputPath = "/media/KINGSTON/" 
     outputPath = configuration['outputDirectory']
     os.system("mkdir " + outputPath + "photoBoothOutput")
     gpioThread = gpio.GPIOThread(outputPath)
@@ -70,9 +76,14 @@ def main():
 
 def startGUI():
     '''Starts the GUI'''
-    app = pbApp.PhotoBoothApp(camera, outputPath)
     
-    main()
+    camera = PiCamera()
+    
+    configurationData = loadJson()
+    configuration = configurationData['configuration']
+    app = pbApp.PhotoBoothApp(camera, configuration['outputDirectory'])
+    
+    main(configurationData, camera)
 
     app.MainLoop()
     
