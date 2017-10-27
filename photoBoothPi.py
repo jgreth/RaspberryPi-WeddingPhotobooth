@@ -56,14 +56,14 @@ def main(configurationData, camera):
     
     configuration = configurationData['configuration']
     previewWindow = configurationData['previewWindow']
-    pictureSize = configurationData['pictureSize']
+    cameraResolution = configurationData['cameraResolution']
     
-    camera.resolution = (pictureSize['width'],pictureSize['height'])
+    camera.resolution = (cameraResolution['width'],cameraResolution['height'])
   
     camera.start_preview()
     camera.preview.fullscreen = False
     #camera.preview.window =(previewWindow['X'],previewWindow['Y'],previewWindow['height'],previewWindow['width'])
-    camera.preview.window =(previewWindow['X'],previewWindow['Y'],pictureSize['height'],pictureSize['width'])
+    camera.preview.window =(previewWindow['X'],previewWindow['Y'],cameraResolution['height'],cameraResolution['width'])
     
     
     #outputPath = "/media/KINGSTON/" 
