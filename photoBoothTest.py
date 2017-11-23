@@ -25,9 +25,9 @@ def runTest():
 
 if __name__ == "__main__":    
     try:
-        iterations = 500
+        numberOfTests = 500
         if len(sys.argv) == 2:
-            iterations = sys.argv[1]
+            numberOfTests = sys.argv[1]
             
         #Main test execution
         runGUI()
@@ -35,11 +35,10 @@ if __name__ == "__main__":
     
         count = 0
         
-        print("Running a total of " + str(iterations) + " tests.")
-        while(count <= iterations):
-            print("\n\nRunning test # " + str(count)) + "\n\n"
+        print("Running a total of " + str(numberOfTests) + " tests.")
+        for count in range(0,int(numberOfTests)):
+            print("\n\nRunning test # " + str(count) + " out of " + str(numberOfTests) + "\n\n")
             runTest()    
-            count += 1
         
     except Exception as ex:
         template = "An exception of type {0} occured. Arguments:\n{1!r}"
