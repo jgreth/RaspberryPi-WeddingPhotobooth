@@ -7,6 +7,7 @@ import resource
 import subprocess
 import os
 import datetime
+import time
 
 
 #GPIO Setup
@@ -59,7 +60,7 @@ class GPIOThread(Thread):
                 
                 resetShutdownCounter = 0 
                 
-            sleep(0.25)
+            time.sleep(0.25)
 
     def finished(self, param):
        self.busy = False      

@@ -25,13 +25,18 @@ def runTest():
 
 if __name__ == "__main__":    
     try:
+        iterations = 500
+        if len(sys.argv) == 2:
+            iterations = sys.argv[1]
+            
         #Main test execution
         runGUI()
         sleep(8)
     
         count = 0
-    
-        while(count < 500):
+        
+        print("Running a total of " + str(iterations) + " tests.")
+        while(count <= iterations):
             print("\n\nRunning test # " + str(count)) + "\n\n"
             runTest()    
             count += 1
