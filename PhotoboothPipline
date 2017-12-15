@@ -1,5 +1,5 @@
 pipeline{
-	agent{label raspberryPi3}
+	agent{label 'raspberryPi3'}
 	stages
 	{
 	    stage('GIT Fetch')
