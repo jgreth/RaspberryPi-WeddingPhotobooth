@@ -16,7 +16,7 @@ pipeline{
 		    //node('raspberryPi3') 
 		    steps
 		    {
-		        sh 'kcov --include-path=/jenkins/ $WORKSPACE/kcov pytest ./photoBoothUnitTest.py --junitxml test_results.xml'
+		        sh 'kcov --include-path=/jenkins/ $WORKSPACE/kcov pytest ./test/photoBoothUnitTest.py --junitxml test_results.xml'
 		        //sh 'mv /jenkins/workspace/Photobooth-Pi3/test_results.xml .'
 		        sh 'cp $WORKSPACE/kcov/pytest/cobertura.xml .'
 		        junit '*test_results.xml'
