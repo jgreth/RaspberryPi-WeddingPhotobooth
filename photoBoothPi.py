@@ -33,8 +33,6 @@ pictureHeight = 1944
 
 currentTime = datetime.datetime.now()
 
-
-
 #Configure sound TODO may want to move this to be set at login in the user profile type file
 os.system("sudo amixer cset numid=3 2")
 
@@ -90,7 +88,7 @@ def startGUI():
     
 def loadJson():
     '''Reads in the configuraiton json file that has the applications parameters'''
-    fileContent = file("./configuration.json", "r")
+    fileContent = file("./res/configuration.json", "r")
     jsonFile = json.load(fileContent)
     
     return jsonFile
