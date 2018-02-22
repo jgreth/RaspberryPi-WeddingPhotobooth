@@ -24,8 +24,8 @@ import logging
 from picamera import PiCamera
 
 #Photobooth App Imports
-import GPIOThread as gpio
-import PhotoboothApp as pbApp
+import photoboothSupport.GPIOThread as gpio
+import photobooth.photoboothApp as pbApp
 
 
 pictureWidth = 2592
