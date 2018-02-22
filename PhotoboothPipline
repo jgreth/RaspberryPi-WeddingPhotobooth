@@ -16,7 +16,7 @@ pipeline{
 		    //node('raspberryPi3') 
 		    steps
 		    {
-		        withEnv(['PYTHONPATH=.;./test;photobooth;./photoboothSupport']) {
+		        withEnv(['PYTHONPATH=.:./test;photobooth:./photoboothSupport']) {
 					sh 'printenv;kcov --include-path=/jenkins/ $WORKSPACE/kcov pytest ./test/photoBoothUnitTest.py --junitxml test_results.xml'
 				}
 				//sh 'mv /jenkins/workspace/Photobooth-Pi3/test_results.xml .'
