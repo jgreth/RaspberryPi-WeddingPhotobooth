@@ -27,7 +27,6 @@ from picamera import PiCamera
 import photoboothSupport.GPIOThread as gpio
 import photobooth.photoboothApp as pbApp
 
-
 pictureWidth = 2592
 pictureHeight = 1944
 
