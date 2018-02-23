@@ -29,7 +29,7 @@ pipeline{
 		    steps
 		    { 
 		    	//build 'Photobooth-Pi3'
-				echo'Future effort'
+				echo 'Future effort'
 		    }  
 		}
 	}
