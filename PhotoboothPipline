@@ -4,7 +4,6 @@ pipeline{
 	{
 	    stage('GIT Fetch')
 	    {
-		    //node('raspberryPi3') 
 		    steps
 		    {
 		        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'angelitov7', url: 'https://github.com/angelitov7/RaspberryPi-WeddingPhotobooth']]])
@@ -29,7 +28,8 @@ pipeline{
 		{
 		    steps
 		    { 
-		    	build 'Photobooth-Pi3'
+		    	//build 'Photobooth-Pi3'
+				echo'Future effort'
 		    }  
 		}
 	}
