@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import photoBoothPi as pb
+import photoboothSupport as pbSupport
 
 import unittest
 
@@ -8,7 +8,7 @@ class PhotoboothMethods(unittest.TestCase):
 
     def test_json_configuration(self):
         
-        jsonFile = pb.loadJson()
+        jsonFile = pbSupport.loadJson()
         configuration = jsonFile['configuration']
         self.assertEqual(configuration['outputDirectory'], '/tmp/')
         

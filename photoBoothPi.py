@@ -24,6 +24,7 @@ import logging
 from picamera import PiCamera
 
 #Photobooth App Imports
+import photoboothSupport as pbSupport
 import photoboothSupport.GPIOThread as gpio
 import photobooth.photoboothApp as pbApp
 
@@ -63,8 +64,6 @@ def main(configurationData, camera):
     #camera.preview.window =(previewWindow['X'],previewWindow['Y'],previewWindow['height'],previewWindow['width'])
     camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(cameraResolution['height']),int(cameraResolution['width']))
     
-    
-    #outputPath = "/media/KINGSTON/" 
     outputPath = configuration['outputDirectory']
     os.system("mkdir " + outputPath + "photoBoothOutput")
     gpioThread = gpio.GPIOThread(outputPath)
@@ -77,7 +76,7 @@ def startGUI():
     
     camera = PiCamera()
     
-    configurationData = loadJson()
+    configurationData = pbSupport.loadJson()
     configuration = configurationData['configuration']
     app = pbApp.PhotoBoothApp(camera, configuration['outputDirectory'])
     
@@ -85,18 +84,13 @@ def startGUI():
 
     app.MainLoop()
     
-def loadJson():
-    '''Reads in the configuraiton json file that has the applications parameters'''
-    fileContent = file("./res/configuration.json", "r")
-    jsonFile = json.load(fileContent)
-    
-    return jsonFile
+
 
 if __name__ == "__main__":
     try:
         with open('/sys/firmware/devicetree/base/model', 'r') as f:
-            first_line = f.readline()
-            print("Running on " + first_line)  
+            firstLine = f.readline()
+            print("Running on " + firstLine)  
         global gpioThread #Need for test script, to mimic button press
         
         startGUI()
