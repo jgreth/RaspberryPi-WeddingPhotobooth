@@ -4,3 +4,5 @@ __pycache__/photoBoothPi.cpython-36.pyc
 test/.cache/v/cache/lastfailed
 .vscode/launch.json
 test/__pycache__/photoBoothUnitTest.cpython-36-PYTEST.pyc
+.vscode/settings.json
+
