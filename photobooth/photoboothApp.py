@@ -10,15 +10,15 @@ import subprocess
 import os
 from time import sleep
 import Image
-from linkedList import *
+from photoboothSupport.linkedList import *
 import datetime
 import urllib2
 import gc
 
 
 #Photobooth Imports
-import GPIOThread
-import CollageFrame as collage
+import photoboothSupport.GPIOThread
+import photoboothSupport.CollageFrame as collage
 
 reducedHeight = 430
 reducedWidth = 322
