@@ -204,7 +204,7 @@ class MainWindow(wx.Frame):
         print wx.DisplaySize()
 
         self.countdownFont = wx.Font(500, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
-        self.countdown = wx.StaticText(self.panel, label="3", pos=(1025,0), size=(500,500))
+        self.countdown = wx.StaticText(self.panel, label="3", pos=(1300,0), size=(500,500))
         self.countdown.SetFont(self.countdownFont)
 
         self.ShowFullScreen(True)
