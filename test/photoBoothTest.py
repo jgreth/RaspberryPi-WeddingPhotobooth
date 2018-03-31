@@ -20,7 +20,7 @@ def runGUI():
 def runTest():
     print("Run test")
     gui.mimicButtonPress()
-    sleep(120)
+    sleep(60)
 
 
 if __name__ == "__main__":    
