@@ -8,6 +8,10 @@ import subprocess
 import os
 import datetime
 import time
+import logging
+logging.config.fileConfig(os.getcwd() + '/logging.conf')
+logger = logging.getLogger(__name__)
+
 
 
 #GPIO Setup
@@ -44,7 +48,7 @@ class GPIOThread(Thread):
             inputValue = GPIO.input(GPIO_INPUT_PIN)
             if inputValue == True and (not self.busy):
                 self.busy = True
-                print("Button Pressed")
+                logger.debug("Button Pressed")
                 self.beginPictureCapture()
             
             resetShutdownValue = GPIO.input(GPIO_RESET_PIN)
@@ -52,10 +56,10 @@ class GPIOThread(Thread):
                 resetShutdownCounter += 1
             elif resetShutdownValue == False and resetShutdownCounter != 0:          
                 if resetShutdownCounter >= 10:
-                    print("Shutdown Button Pressed! Shutting down system now.....")
+                    logger.debug("Shutdown Button Pressed! Shutting down system now.....")
                     os.system("sudo shutdown -h now")   
                 elif resetShutdownCounter > 1:
-                    print("Reset Button Pressed! Rebooting system now.....")
+                    logger.debug("Reset Button Pressed! Rebooting system now.....")
                     os.system("sudo reboot")  
                 
                 resetShutdownCounter = 0 
@@ -67,7 +71,7 @@ class GPIOThread(Thread):
        
     def beginPictureCapture(self):
         
-        print("beginPictureCapture - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        logger.debug("beginPictureCapture - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
         #Play sound
         p = subprocess.Popen(["aplay", os.getcwd() + "/res/smw_1-up.wav"])
@@ -76,15 +80,15 @@ class GPIOThread(Thread):
         #Publisher.sendMessage("reset", "Nothing")
         Publisher.sendMessage("object.hideBeginningText")
         Publisher.sendMessage("object.reset", msg="")
-        print("Remember to Smile")
+        logger.debug("Remember to Smile")
         currentTime = datetime.datetime.now()
-        print("Output path: " + self.outputPath)
+        logger.debug("Output path: " + self.outputPath)
         self.newDirName = self.outputPath + str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-')
         os.mkdir(self.newDirName)
         subprocess.call(['chmod', '777', self.newDirName])   
         Publisher.sendMessage("object.startCountdown",param=self.newDirName)
         
-        print("beginPictureCapture - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        logger.debug("beginPictureCapture - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
 if __name__ == "__main__":        
     gpioThread = GPIOThread()
