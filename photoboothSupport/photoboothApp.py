@@ -14,6 +14,9 @@ from linkedList import *
 import datetime
 import urllib2
 import gc
+import logging
+logging.config.fileConfig(os.getcwd() + '/logging.conf')
+logger = logging.getLogger(__name__)
 
 
 #Photobooth Imports
@@ -30,13 +33,14 @@ imageList = LinkedList()
 img = Image.open(os.getcwd() + "/res/photoboothlayout.jpg")
 
 class PhotoBoothApp(wx.App):
-    def __init__(self, camera, outputPath):
+    def __init__(self, camera, outputPath, configurationData):
         wx.App.__init__(self,0)
 
-        self.mainFrame = MainWindow(None," ", camera, outputPath)
+        self.mainFrame = MainWindow(None," ", camera, outputPath, configurationData)
         self.mainFrame.Show(True)
         self.camera = camera
         self.outputPath = outputPath
+        self.configurationData = configurationData
 
     def MainLoop(self):
 
@@ -49,10 +53,10 @@ class PhotoBoothApp(wx.App):
                 eventLoop.Dispatch()
                        
             if self.mainFrame.showCollage == True:
-                print("Showing Collage")
+                logger.debug("Showing Collage")
                 self.mainFrame.showCollageInner()
                 self.mainFrame.showCollage = False
-                print("Finished Showing Collage")
+                logger.debug("Finished Showing Collage")
             elif self.mainFrame.panel.reset == True:
                 self.mainFrame.panel.resetPanelInner()
             elif self.mainFrame.panel.updateCountdownImage == True:
@@ -80,19 +84,17 @@ class MainPanel(wx.Panel):
     
     pictureName= "photoBoothPic.jpg"
     
-    def __init__(self, parent, camera, outputPath):
+    def __init__(self, parent, camera, outputPath, configurationData):
         wx.Panel.__init__(self,parent=parent)
         self.camera = camera
         self.outputPath = outputPath
-        
-        #04032017 - Had to remove this line for it to work with the new version of wxPython 2.9+
-        #self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+        self.configurationData = configurationData
         
         self.frame = parent
         
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         
-        print "App Path: " + os.getcwd() + "/res/photoboothappbackground.jpg"
+        logger.debug( "App Path: " + os.getcwd() + "/res/photoboothappbackground.jpg")
         loc = wx.Bitmap(os.getcwd() + "/res/photoboothappbackground.jpg")
         dc = wx.ClientDC(self)
         dc.DrawBitmap(loc, 0, 0)
@@ -123,7 +125,7 @@ class MainPanel(wx.Panel):
         Publisher.subscribe(self.playSound, "object.playSound")
         
         self.mainPanelWxObjectCount = len(self.GetChildren())
-        print "Initial Panel Children Count: " + str(self.mainPanelWxObjectCount)
+        logger.debug("Initial Panel Children Count: " + str(self.mainPanelWxObjectCount))
 
 
     def resetPanelInner(self):
@@ -182,11 +184,11 @@ class MainPanel(wx.Panel):
     def updatePicturePanel(self, picturePath):
         self.pictureTakenCounter += 1
         
-        print "Pictures taken " + str(self.pictureTakenCounter)
+        logger.debug("Pictures taken " + str(self.pictureTakenCounter))
         self.picturePath = picturePath
-        print ("updatePicturePanel - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        print ("Child count: " +  str(len(self.GetChildren())))
-        print("Updating picture " + str(self.pictureTakenCounter) + " from " + threading.current_thread().name)
+        logger.debug("updatePicturePanel - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        logger.debug("Child count: " +  str(len(self.GetChildren())))
+        logger.debug("Updating picture " + str(self.pictureTakenCounter) + " from " + threading.current_thread().name)
         
         self.twximg = wx.Image(str(self.picturePath),wx.BITMAP_TYPE_JPEG)
         self.bmp = self.twximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight).ConvertToBitmap()
@@ -196,19 +198,19 @@ class MainPanel(wx.Panel):
                 self.picture1.Destroy()
                 
             self.picture1 = wx.StaticBitmap(self, -1, self.bmp, (self.takenPictureLeftOffset,60))
-            print("updatePicturePanel - 1 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+            logger.debug("updatePicturePanel - 1 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         elif self.pictureTakenCounter == 2:
             if self.picture2 is not None:
                 self.picture2.Destroy()
                 
             self.picture2 = wx.StaticBitmap(self,-1, self.bmp, (self.takenPictureLeftOffset,305))
-            print("updatePicturePanel - 2 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+            logger.debug("updatePicturePanel - 2 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         elif self.pictureTakenCounter == 3:
             if self.picture3 is not None:
                 self.picture3.Destroy()
             
             self.picture3 = wx.StaticBitmap(self,-1, self.bmp,(self.takenPictureLeftOffset,550))
-            print("updatePicturePanel - 3 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+            logger.debug("updatePicturePanel - 3 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         elif self.pictureTakenCounter == 4:
             
             if self.picture4 is not None:
@@ -216,11 +218,11 @@ class MainPanel(wx.Panel):
                 
             self.picture4 = wx.StaticBitmap(self,-1, self.bmp,(self.takenPictureLeftOffset,795))
             self.showProcessingText()
-            print("updatePicturePanel - 4 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+            logger.debug("updatePicturePanel - 4 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
-        print("Completed updating picture")
-        print("updatePicturePanel - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        print("Child count Exit: " + str(len(self.GetChildren())))    
+        logger.debug("Completed updating picture")
+        logger.debug("updatePicturePanel - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        logger.debug("Child count Exit: " + str(len(self.GetChildren())))    
 
     def initCountdownTimerImage(self):
         
@@ -243,7 +245,7 @@ class MainPanel(wx.Panel):
     def startCountdown(self, param):
         self.updateCountdownImage = True
         self.newDirName = param
-        print("New Directory Name: " + self.newDirName)
+        logger.debug("New Directory Name: " + self.newDirName)
         
     def updateCountdownInner(self):
 
@@ -251,16 +253,16 @@ class MainPanel(wx.Panel):
             if self.countdownCounter != 0:
                 self.countdownImage.Hide()
                 
-            print("Updating countdown: " + str(self.countdownCounter))
+            logger.debug("Updating countdown: " + str(self.countdownCounter))
             
             if self.countdownImage is not None:
                 self.countdownImage.Destroy()
             
-            self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.countdownCounter],(1025,100))
+            self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.countdownCounter],(1225,100))
             self.countdownCounter += 1
-            sleep(1)
+            sleep(.75)
             threading.Thread(target=self.playSound,args=[os.getcwd() + "/res/beep-07.wav"]).start()
-            #p = subprocess.Popen(["aplay", "./res/beep-07.wav"])
+            subprocess.Popen(["aplay", "./res/beep-07.wav"])
             
         else:
             self.countdownCounter = 0
@@ -274,9 +276,9 @@ class MainPanel(wx.Panel):
         global reducedHeight
         global reducedWidth
                 
-        print ("takePicture - 6 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        logger.debug ("takePicture - 6 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
-        sleep(1.5)
+        sleep(1.0)
         #Turn on flash
         GPIO.output(GPIOThread.GPIO_FLASH_PIN, False)
                     
@@ -286,7 +288,7 @@ class MainPanel(wx.Panel):
         #Take picture
         self.camera.capture(self.pictureName, resize=(reducedHeight, reducedWidth))
 
-        sleep(1)
+        #sleep(1)
 
         #Turn off flash
         GPIO.output(GPIOThread.GPIO_FLASH_PIN, True)
@@ -302,9 +304,9 @@ class MainPanel(wx.Panel):
             Publisher.sendMessage("object.showProcessingText", param="Nothing")
             #Stop the countdown process
             self.updateCountdownImage = False      
-            print("Picture capture complete")
+            logger.debug("Picture capture complete")
             
-            sleep(1)
+            #sleep(1)
             self.monitorFolder(self.newDirName)
             self.makeCollage()
 
@@ -315,7 +317,7 @@ class MainPanel(wx.Panel):
             #Start the countdown process
             self.updateCountdownImage = True  
             
-        print("takePicture 7 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)       
+        logger.debug("takePicture 7 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)       
 
     def monitorFolder(self,source):
         global reducedHeight
@@ -324,11 +326,14 @@ class MainPanel(wx.Panel):
         fileExtList = [".jpg"];
         tempList = os.listdir(source)
     
-        print(tempList)
-        print(len(tempList) % 4)
+        logger.debug(tempList)
+        logger.debug(len(tempList) % 4)
     
-        topBorderOffset = "139"
+        topBorderOffset = "40" #was 15
         leftBorderOffset = "60" #"73"
+        
+        leftBorderAdjustment = 10
+        lowerPictureAdjustment = 30
         
         if len(tempList) % 4 == 0:
             for picture in tempList:
@@ -336,25 +341,24 @@ class MainPanel(wx.Panel):
                     fileName = os.path.join(source,picture)
                     pindex = tempList.index(picture) + 1
                     if pindex % 4 == 1:
-                        print("Pic % 1 " + picture)
-                        location = leftBorderOffset + "," + topBorderOffset
+                        logger.debug("Pic % 1 " + picture)
+                        location = str(int(leftBorderOffset) + leftBorderAdjustment) + "," + topBorderOffset
                     elif pindex % 4 == 2:
-                        print("Pic % 2 " + picture)
-                        location = str(reducedWidth + 213) + "," + topBorderOffset
+                        logger.debug("Pic % 2 " + picture)
+                        location = str(reducedWidth + 200) + "," + topBorderOffset
                     elif pindex % 4 == 3:
-                        print("Pic % 3 " + picture)
-                        location = str(reducedWidth + 213) + "," + str(reducedHeight + 37)
+                        logger.debug("Pic % 3 " + picture)
+                        location = str(reducedWidth + 200) + "," + str(reducedHeight-lowerPictureAdjustment)
                     elif pindex % 4 == 0:
-                        print("Pic % 0 " + picture)
-                        location = leftBorderOffset + "," + str(reducedHeight + 37)
+                        logger.debug("Pic % 0 " + picture)
+                        location = str(int(leftBorderOffset) + leftBorderAdjustment) + "," + str(reducedHeight-lowerPictureAdjustment)
                     self.addPicture(fileName,location)
       
     def addPicture(self, fileName, location):
         global imageList
-        #self.resizePicture(fileName)
-        #imageList.add(fileName + "_collage",location)
+
         imageList.add(fileName, location)
-        print("Added " + fileName + " to " + location)
+        logger.debug("Added " + fileName + " to " + location)
  
     def resizePicture(self, imagePath):
         global collageReducedPictureSize
@@ -365,8 +369,8 @@ class MainPanel(wx.Panel):
             
     def makeCollage(self):
         
-        print("makeCollage - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        print("Creating collage")
+        logger.debug("makeCollage - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        logger.debug("Creating collage")
         global imageList
         global photo
         global img
@@ -387,69 +391,71 @@ class MainPanel(wx.Panel):
                 tempName = "Photobooth_"+ currentTime.strftime("%H_%M_%S") + ".jpg"
                 collageName = fileName+ "/" + tempName
                 img.save(collageName)
-            #shutil.move(current.getFileName(), destination)
+
             subprocess.call(["mv", current.getFileName(), destination])
             current = current.getNext()
         
         imageList = LinkedList() 
         
         #Send message to GUI thread
-        print("Calling showCollage from: " + threading.current_thread().name)
+        logger.debug("Calling showCollage from: " + threading.current_thread().name)
         Publisher.sendMessage("object.showCollage", collagePath=collageName)
-        print("Collage created")
+        logger.debug("Collage created")
         
         if self.checkInternetConnection():
-            print("Uploading to DropBox: " + collageName + " to: " + tempName)
-            dropboxThread = threading.Thread(target=self.sendToDropbox, args=[collageName, tempName])
-            dropboxThread.start()
+            logger.debug("Uploading to DropBox: " + collageName + " to: " + tempName)
+            #Not sending collage to dropbox
+            #dropboxThread = threading.Thread(target=self.sendToDropbox, args=[collageName, tempName])
+            #dropboxThread.start()
               
-        print("makeCollage - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)  
+        logger.debug("makeCollage - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)  
 
     def checkInternetConnection(self):
         try:
-            response=urllib2.urlopen('http://8.8.8.8',timeout=1) #Google DNS
-            print("Connected to internet.")
+            response=urllib2.urlopen('http://216.58.192.142',timeout=1) #Google DNS
+            logger.debug("Connected to internet.")
             return True
         except urllib2.URLError as err: pass
-        print("Not connected to internet.")
+        logger.debug("Not connected to internet.")
         return False  
     
     def sendToDropbox(self, fullFilePath, fileName):
-        print("sendToDropbox - Start -  Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) 
-        command = "./dropbox_uploader.sh upload " + fullFilePath + " " + fileName
-        print("Uploading to Dropbox: " + command)
+        logger.debug("sendToDropbox - Start -  Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) 
+        command = "./Dropbox-Uploader/dropbox_uploader.sh upload " + fullFilePath + " " + fileName
+        logger.debug("Uploading to Dropbox: " + command)
         p = subprocess.Popen([command], shell=True)
-        print("sendToDropbox - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) 
+        logger.debug("sendToDropbox - End - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) 
         
     def showProcessingText(self, param=""):
-        print("Showing processing message...")
+        logger.debug("Showing processing message...")
         self.processingText.Show()
 
     def hideProcessingText(self, param=""):
-        print("Hiding processing message...")
+        logger.debug("Hiding processing message...")
         self.processingText.Hide()
         
     def showBeginningText(self, param=""):
         self.hideProcessingText("")
-        print("Showing beginning message...")
+        logger.debug("Showing beginning message...")
         self.beginningText.Show()
         
         #This will allow the application to respond to the button
         Publisher.sendMessage("object.finished", param="")
 
     def hideBeginningText(self, param=""):
-        print("Hiding beginning message...")
+        logger.debug("Hiding beginning message...")
         self.beginningText.Hide()        
         
 class MainWindow(wx.Frame):
 
     showCollage = True
     
-    def __init__(self, parent, title, camera, outputPath):
+    def __init__(self, parent, title, camera, outputPath, configurationData):
         wx.Frame.__init__(self, parent, size=(wx.DisplaySize()), pos=(0,0), title="Photo Booth")
-        self.panel = MainPanel(self, camera, outputPath)
+        self.panel = MainPanel(self, camera, outputPath, configurationData)
         self.camera = camera
         self.outputPath = outputPath
+        self.configurationData = configurationData
 
         self.ShowFullScreen(True)
 
@@ -461,25 +467,35 @@ class MainWindow(wx.Frame):
         Publisher.subscribe(self.panel.showBeginningText, "object.showBeginningText")
         Publisher.subscribe(self.panel.hideBeginningText, "object.hideBeginningText")
 
-        print("MainWindow thread: " + threading.current_thread().name)
+        logger.debug("MainWindow thread: " + threading.current_thread().name)
 
     def showCollageInner(self):
-        print("showCollageInner - 8 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        print("Showing collage from GUI")
+        logging.debug("showCollageInner - 8 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        logging.debug("Showing collage from GUI")
+        self.camera.stop_preview()
         collageWindow = collage.CollageFrame(self.collagePath)
         collageWindow.Show()
 
         #Show picture for 15 seconds and close down
         wx.FutureCall(15000, collageWindow.Destroy)
-        print("Collage Displayed!")
+        logging.debug("Collage Displayed!")
         gc.collect()
-        print("showCollageInner - 9 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        
+        logger.debug("showCollageInner - 9 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        wx.FutureCall(15001, self.restartCamera)
 
+    def restartCamera(self):
+        previewWindow = self.configurationData['previewWindow']
+        cameraResolution = self.configurationData['pictureSize']
+        self.camera.resolution = (int(cameraResolution['width']),int(cameraResolution['height']))
+  
+        self.camera.start_preview()
+        self.camera.preview.fullscreen = False
+        self.camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(cameraResolution['height']),int(cameraResolution['width']))
+    
     def showCollage(self, collagePath):
         self.collagePath = collagePath
         self.showCollage = True
-        print(self.collagePath)
+        logger.debug(self.collagePath)
 
     def resetPanel(self):
         self.panel.resetPanel()

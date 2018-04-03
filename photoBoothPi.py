@@ -20,6 +20,8 @@ import resource
 
 import json
 import logging
+import logging.config
+
 
 from picamera import PiCamera
 
@@ -47,8 +49,12 @@ def main(configurationData, camera):
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #Need for test script, to mimic button press
     global gpioThread
     
-    logger = logging.getLogger('logs/photobooth.log')
-    logger.setLevel(logging.DEBUG)
+    loggerPath = './logs/photobooth.log'
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    
+    logging.config.fileConfig(os.getcwd() + '/logging.conf')
+    logger = logging.getLogger(__name__)
     
     logger.debug("Inside photoBoothPi main operation")
     
@@ -56,7 +62,7 @@ def main(configurationData, camera):
     previewWindow = configurationData['previewWindow']
     cameraResolution = configurationData['pictureSize']
     
-    print("Requesting " + str(cameraResolution['width']),str(cameraResolution['height']))
+    logger.debug("Requesting " + str(cameraResolution['width']) + " " + str(cameraResolution['height']))
     camera.resolution = (int(cameraResolution['width']),int(cameraResolution['height']))
   
     camera.start_preview()
@@ -65,7 +71,12 @@ def main(configurationData, camera):
     camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(cameraResolution['height']),int(cameraResolution['width']))
     
     outputPath = configuration['outputDirectory']
-    os.system("mkdir " + outputPath + "photoBoothOutput")
+    outputDirPath = outputPath + "photoBoothOutput"
+    if not os.path.exists(outputDirPath):
+        os.mkdir(outputDirPath)
+    else:
+        logger.debug("Output directory already exist.")
+        
     gpioThread = gpio.GPIOThread(outputPath)
     gpioThread.setDaemon(True)
     gpioThread.setCamera(camera)
@@ -78,14 +89,12 @@ def startGUI():
     
     configurationData = pbSupport.loadJson()
     configuration = configurationData['configuration']
-    app = pbApp.PhotoBoothApp(camera, configuration['outputDirectory'])
+    app = pbApp.PhotoBoothApp(camera, configuration['outputDirectory'], configurationData)
     
     main(configurationData, camera)
 
     app.MainLoop()
     
-
-
 if __name__ == "__main__":
     try:
         with open('/sys/firmware/devicetree/base/model', 'r') as f:

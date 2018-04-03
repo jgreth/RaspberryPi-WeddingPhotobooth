@@ -4,8 +4,11 @@ import datetime
 from time import sleep
 import threading
 import sys
+import os
 
+sys.path.append(os.getcwd())
 import photoBoothPi as gui
+
 
 
 def run():
@@ -20,7 +23,7 @@ def runGUI():
 def runTest():
     print("Run test")
     gui.mimicButtonPress()
-    sleep(60)
+    sleep(120)
 
 
 if __name__ == "__main__":    
