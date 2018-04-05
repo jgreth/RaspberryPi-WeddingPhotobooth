@@ -1,7 +1,7 @@
 {
 	"configuration":
 	{
-		"outputDirectory": "/media/pi/KINGSTON1/photoBoothOutput/"	
+		"outputDirectory": "/media/pi/KINGSTON/photoBoothOutput/"	
 	},
 	"previewWindow":
 	{

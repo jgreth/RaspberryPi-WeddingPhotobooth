@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-
 import os
 import sys
 
@@ -21,7 +19,6 @@ import resource
 import json
 import logging
 import logging.config
-
 
 from picamera import PiCamera
 
@@ -45,16 +42,12 @@ def mimicButtonPress():
     gpioThread.beginPictureCapture()
 
 
-def main(configurationData, camera):
+def main(configurationData, camera, logger):
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #Need for test script, to mimic button press
     global gpioThread
     
-    loggerPath = './logs/photobooth.log'
     if not os.path.exists('logs'):
         os.mkdir('logs')
-    
-    logging.config.fileConfig(os.getcwd() + '/logging.conf')
-    logger = logging.getLogger(__name__)
     
     logger.debug("Inside photoBoothPi main operation")
     
@@ -67,7 +60,6 @@ def main(configurationData, camera):
   
     camera.start_preview()
     camera.preview.fullscreen = False
-    #camera.preview.window =(previewWindow['X'],previewWindow['Y'],previewWindow['height'],previewWindow['width'])
     camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(cameraResolution['height']),int(cameraResolution['width']))
     
     outputPath = configuration['outputDirectory']
@@ -77,9 +69,8 @@ def main(configurationData, camera):
     else:
         logger.debug("Output directory already exist.")
         
-    gpioThread = gpio.GPIOThread(outputPath)
+    gpioThread = gpio.GPIOThread(outputPath, logger)
     gpioThread.setDaemon(True)
-    gpioThread.setCamera(camera)
     gpioThread.start()
 
 def startGUI():
@@ -87,11 +78,31 @@ def startGUI():
     
     camera = PiCamera()
     
+    logging.basicConfig(level=logging.NOTSET)
+    logger = logging.getLogger(__name__)
+    
+    # create a file handler
+    handler = logging.FileHandler('logs/photobooth.log')
+    handler.setLevel(logging.NOTSET)
+    
+    # create console handler with a higher log level
+    console = logging.StreamHandler()
+    console.setLevel(logging.NOTSET)
+    
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    console.setFormatter(formatter)
+    
+    # add the handlers to the logger
+    logger.addHandler(handler)
+    logger.addHandler(console)
+    
     configurationData = pbSupport.loadJson()
     configuration = configurationData['configuration']
-    app = pbApp.PhotoBoothApp(camera, configuration['outputDirectory'], configurationData)
+    app = pbApp.PhotoBoothApp(camera, configuration['outputDirectory'], configurationData, logger)
     
-    main(configurationData, camera)
+    main(configurationData, camera, logger)
 
     app.MainLoop()
     
