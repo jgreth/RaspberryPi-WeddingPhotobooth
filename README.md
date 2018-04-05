@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 RaspberryPi Photobooth
 ===========
 
