@@ -27,13 +27,10 @@ import photoboothSupport as pbSupport
 import photoboothSupport.photoboothApp as pbApp
 import photoboothSupport.GPIOThread as gpio
 
-pictureWidth = 2592
-pictureHeight = 1944
 
-currentTime = datetime.datetime.now()
-
-#Configure sound TODO may want to move this to be set at login in the user profile type file
-os.system("sudo amixer cset numid=3 2")
+#Configure sound TODO may want to move this to be set at login in the user profile type file.
+#This appears to be different between verison of Pis?
+os.system("sudo amixer cset numid=3 1")
 
 def mimicButtonPress():
     '''This operation mimics a "hardware" button press
@@ -78,25 +75,7 @@ def startGUI():
     
     camera = PiCamera()
     
-    logging.basicConfig(level=logging.NOTSET)
-    logger = logging.getLogger(__name__)
-    
-    # create a file handler
-    handler = logging.FileHandler('logs/photobooth.log')
-    handler.setLevel(logging.NOTSET)
-    
-    # create console handler with a higher log level
-    console = logging.StreamHandler()
-    console.setLevel(logging.NOTSET)
-    
-    # create a logging format
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    console.setFormatter(formatter)
-    
-    # add the handlers to the logger
-    logger.addHandler(handler)
-    logger.addHandler(console)
+    logger = pbSupport.configureLogger()
     
     configurationData = pbSupport.loadJson()
     configuration = configurationData['configuration']

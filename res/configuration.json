@@ -1,7 +1,8 @@
 {
 	"configuration":
 	{
-		"outputDirectory": "/media/pi/KINGSTON/photoBoothOutput/"	
+		"outputDirectory": "/media/pi/KINGSTON1/photoBoothOutput/",
+		"logFilePath": "/tmp/photobooth.log"	
 	},
 	"previewWindow":
 	{
@@ -12,7 +13,26 @@
 	},
 	"pictureSize":
 	{
-		"width": "800",
-		"height": "600"
+		"height": "800",
+		"width": "600",
+		"reducedHeight": "360",
+		"reducedWidth": "270"
+	},
+	"beginTextPosition":
+	{
+		"X": "0",
+		"Y": "850"
+	},
+	"processingTextPosition":
+	{
+		"X": "0",
+		"Y": "850"
+	},
+	"collageImageWindow":
+	{
+		"topBorderOffset": "10",
+		"leftBorderOffset": "80",
+		"secondColumnOffset": "270",
+        "bottomRowAdjustment":"0"
 	}
 }

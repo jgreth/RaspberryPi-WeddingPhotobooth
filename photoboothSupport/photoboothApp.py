@@ -20,10 +20,6 @@ import logging
 import GPIOThread
 import CollageFrame as collage
 
-reducedHeight = 430
-reducedWidth = 322
-collageReducedPictureSize = reducedHeight, reducedWidth
-
 photo = 0
 
 imageList = LinkedList()
@@ -91,6 +87,19 @@ class MainPanel(wx.Panel):
         
         self.frame = parent
         
+        collageWindow = self.configurationData['collageImageWindow']
+        self.topBorderOffset = collageWindow['topBorderOffset']
+        self.leftBorderOffset = int(collageWindow['leftBorderOffset'])
+        self.secondColumnOffset = int(collageWindow['secondColumnOffset'])   
+        self.bottomRowAdjustment = int(collageWindow['bottomRowAdjustment'])
+        
+        pictureSize = self.configurationData['pictureSize']
+        self.reducedHeight = int(pictureSize['reducedHeight'])
+        self.reducedWidth = int(pictureSize['reducedWidth'])
+        
+        beginTextPosition = self.configurationData['beginTextPosition']
+        processingTextPosition = self.configurationData['processingTextPosition']
+        
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         
         self.logger.debug( "App Path: " + os.getcwd() + "/res/photoboothappbackground.jpg")
@@ -101,13 +110,13 @@ class MainPanel(wx.Panel):
         self.initCountdownTimerImage()
 
         self.wxBmp =  wx.Image(os.getcwd() + "/res/processing.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
-        self.processingText = wx.StaticBitmap(self,-1, self.wxBmp,(85,850))
+        self.processingText = wx.StaticBitmap(self,-1, self.wxBmp,(int(processingTextPosition['X']), int(processingTextPosition['Y'])))
         self.processingText.Hide()
         
         self.wxBmp.Destroy()
         
         self.wxBmp =  wx.Image(os.getcwd() + "/res/begin.jpg",wx.BITMAP_TYPE_JPEG).ConvertToBitmap()
-        self.beginningText = wx.StaticBitmap(self,-1, self.wxBmp,(85,850))
+        self.beginningText = wx.StaticBitmap(self,-1, self.wxBmp,(int(beginTextPosition['X']), int(beginTextPosition['Y'])))
         self.beginningText.Show()
         
         self.wxBmp.Destroy()
@@ -125,7 +134,6 @@ class MainPanel(wx.Panel):
         
         self.mainPanelWxObjectCount = len(self.GetChildren())
         self.logger.debug("Initial Panel Children Count: " + str(self.mainPanelWxObjectCount))
-
 
     def resetPanelInner(self):
         
@@ -260,7 +268,6 @@ class MainPanel(wx.Panel):
             self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.countdownCounter],(1225,100))
             self.countdownCounter += 1
             sleep(.75)
-            threading.Thread(target=self.playSound,args=[os.getcwd() + "/res/beep-07.wav"]).start()
             subprocess.Popen(["aplay", "./res/beep-07.wav"])
             
         else:
@@ -271,9 +278,6 @@ class MainPanel(wx.Panel):
             self.takePicture()
             
     def takePicture(self):
-        
-        global reducedHeight
-        global reducedWidth
                 
         self.logger.debug ("takePicture - 6 Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         
@@ -285,7 +289,7 @@ class MainPanel(wx.Panel):
         p = subprocess.Popen(["aplay", os.getcwd() + "/res/camera-shutter-click-01.wav"])
                
         #Take picture
-        self.camera.capture(self.pictureName, resize=(reducedHeight, reducedWidth))
+        self.camera.capture(self.pictureName, resize=(self.reducedHeight, self.reducedWidth))
 
         #sleep(1)
 
@@ -322,22 +326,13 @@ class MainPanel(wx.Panel):
     def monitorFolder(self,source):
         '''
         This function monitors the output directory.  Every picture is positioned into the collage.
-        TODO: Make the collage parameters part of the config.xml 
         '''
-        global reducedHeight
-        global reducedWidth
     
         fileExtList = [".jpg"];
         tempList = os.listdir(source)
     
         self.logger.debug(tempList)
         self.logger.debug(len(tempList) % 4)
-    
-        topBorderOffset = "40" #was 15
-        leftBorderOffset = "60" #"73"
-        
-        leftBorderAdjustment = 10
-        lowerPictureAdjustment = 30
         
         if len(tempList) % 4 == 0:
             for picture in tempList:
@@ -345,17 +340,21 @@ class MainPanel(wx.Panel):
                     fileName = os.path.join(source,picture)
                     pindex = tempList.index(picture) + 1
                     if pindex % 4 == 1:
-                        self.logger.debug("Pic % 1 " + picture)
-                        location = str(int(leftBorderOffset) + leftBorderAdjustment) + "," + topBorderOffset
+                        self.logger.debug("Top Pic % 1 " + picture)
+                        location = str(self.leftBorderOffset) + "," + self.topBorderOffset
+                        self.logger.debug(location)
                     elif pindex % 4 == 2:
-                        self.logger.debug("Pic % 2 " + picture)
-                        location = str(reducedWidth + 200) + "," + topBorderOffset
+                        self.logger.debug("Top Pic % 2 " + picture)
+                        location = str(self.reducedWidth + self.secondColumnOffset) + "," + self.topBorderOffset
+                        self.logger.debug(location)
                     elif pindex % 4 == 3:
-                        self.logger.debug("Pic % 3 " + picture)
-                        location = str(reducedWidth + 200) + "," + str(reducedHeight-lowerPictureAdjustment)
+                        self.logger.debug("Bottom Pic % 3 " + picture)
+                        location = str(self.reducedWidth + self.secondColumnOffset) + "," + str(self.reducedHeight+self.bottomRowAdjustment)
+                        self.logger.debug(location)
                     elif pindex % 4 == 0:
-                        self.logger.debug("Pic % 0 " + picture)
-                        location = str(int(leftBorderOffset) + leftBorderAdjustment) + "," + str(reducedHeight-lowerPictureAdjustment)
+                        self.logger.debug("Bottom Pic % 0 " + picture)
+                        location = str(self.leftBorderOffset) + "," + str(self.reducedHeight+self.bottomRowAdjustment)
+                        self.logger.debug(location)
                     self.addPicture(fileName,location)
       
     def addPicture(self, fileName, location):
@@ -365,7 +364,7 @@ class MainPanel(wx.Panel):
         self.logger.debug("Added " + fileName + " to " + location)
  
     def resizePicture(self, imagePath):
-        global collageReducedPictureSize
+        collageReducedPictureSize = self.reducedHeight, self.reducedWidth
         
         image = Image.open(imagePath)
         image.thumbnail(collageReducedPictureSize, Image.ANTIALIAS)
@@ -392,7 +391,7 @@ class MainPanel(wx.Panel):
             if current.getPosition() % 4 == 0 :
                 photo += 1
                 currentTime = datetime.datetime.now()
-                tempName = "Photobooth_"+ currentTime.strftime("%H_%M_%S") + ".jpg"
+                tempName = "Photobooth_"+ str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-') + ".jpg"
                 collageName = fileName + "/" + tempName
                 img.save(collageName)
 

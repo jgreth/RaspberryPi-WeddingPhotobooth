@@ -12,12 +12,17 @@ def loadJson(jsonFilePath="./res/configuration.json"):
     return jsonFile
 
 def configureLogger():
+    '''Configures photobooth logger'''
     logging.basicConfig(level=logging.NOTSET)
     logger = logging.getLogger(__name__)
     
+    jsonFile = loadJson()
+    configuration = jsonFile['configuration']
+    logFilePath = configuration['logFilePath']
+    
     # create a file handler
-    handler = logging.logging.handlers.RotatingFileHandler(
-              'logs/photobooth.log', maxBytes=20, backupCount=5)
+    handler = logging.handlers.RotatingFileHandler(
+              logFilePath, maxBytes=2000, backupCount=5)
     handler.setLevel(logging.NOTSET)
     
     # create console handler with a higher log level
