@@ -14,6 +14,8 @@ import datetime
 import urllib2
 import gc
 import logging
+from photoBoothPicture import PhotoBoothPicture
+
 
 #Photobooth Imports
 import GPIOThread
@@ -365,8 +367,8 @@ class MainPanel(wx.Panel):
                     self.addPicture(fileName,location)
       
     def addPicture(self, fileName, location):
-
-        self.capturedPictures.append(fileName, location[0], location[1])
+        pbPicture = PhotoBoothPicture(fileName, location[0], location[1])
+        self.capturedPictures.append(pbPicture)
         self.logger.debug("Added " + fileName + " to " + location[0] + "," + location[1])
  
     def resizePicture(self, imagePath):

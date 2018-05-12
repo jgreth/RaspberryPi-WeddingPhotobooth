@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-class Picture:
+class PhotoBoothPicture:
 
 
     def __init__(self, fileName, x=0, y=0, width=0, height=0):
