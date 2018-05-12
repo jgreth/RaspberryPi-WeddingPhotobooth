@@ -301,7 +301,6 @@ class MainPanel(wx.Panel):
         self.camera.capture(self.pictureName, resize=(self.reducedHeight, self.reducedWidth))
 
         #sleep(1)
-
         #Turn off flash
         GPIO.output(GPIOThread.GPIO_FLASH_PIN, True)
 
@@ -391,13 +390,13 @@ class MainPanel(wx.Panel):
         #while len(self.capturedPictures) != 0 and current != None:
         for current in self.capturedPictures:
             pic = current.data
-            self.photoboothLayoutPicture.paste(pic,(current.x,current.y))          
-            if current.getPosition() % 4 == 0 :
-                self.photoCounter += 1
-                currentTime = datetime.datetime.now()
-                tempName = "Photobooth_"+ str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-') + ".jpg"
-                collageName = fileName + "/" + tempName
-                self.photoboothLayoutPicture.save(collageName)
+            self.photoboothLayoutPicture.paste(pic, (int(current.x),int(current.y)))          
+            
+            self.photoCounter += 1
+            currentTime = datetime.datetime.now()
+            tempName = "Photobooth_"+ str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-') + ".jpg"
+            collageName = fileName + "/" + tempName
+            self.photoboothLayoutPicture.save(collageName)
         
         self.capturedPictures = []
         
