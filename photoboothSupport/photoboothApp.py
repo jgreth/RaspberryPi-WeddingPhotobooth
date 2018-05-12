@@ -10,7 +10,6 @@ import subprocess
 import os
 from time import sleep
 import Image
-from linkedList import *
 import datetime
 import urllib2
 import gc
@@ -19,11 +18,6 @@ import logging
 #Photobooth Imports
 import GPIOThread
 import CollageFrame as collage
-
-photo = 0
-
-imageList = LinkedList()
-img = Image.open(os.getcwd() + "/res/photoboothlayout.jpg")
 
 class PhotoBoothApp(wx.App):
     def __init__(self, camera, outputPath, configurationData, logger):
@@ -89,7 +83,8 @@ class MainPanel(wx.Panel):
         self.collageWindowThirdPicturePosition = (collageWindow['thirdPicture']['X'], collageWindow['thirdPicture']['Y'])
         self.collageWindowFourthPicturePosition = (collageWindow['fourthPicture']['X'], collageWindow['fourthPicture']['Y'])
         
-        
+        self.photoboothLayoutPicture = Image.open(os.getcwd() + "/res/photoboothlayout.jpg")
+
         pictureSize = self.configurationData['pictureSize']
         self.reducedHeight = int(pictureSize['reducedHeight'])
         self.reducedWidth = int(pictureSize['reducedWidth'])
@@ -107,6 +102,8 @@ class MainPanel(wx.Panel):
         self.capturedThirdPicturePosition = (capturedPicturePosition['thirdPicture']['X'], capturedPicturePosition['thirdPicture']['Y'])
         self.capturedFourthPicturePosition = (capturedPicturePosition['fourthPicture']['X'], capturedPicturePosition['fourthPicture']['Y'])
         
+        self.photoCounter = 0
+
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         
         self.logger.debug( "App Path: " + os.getcwd() + "/res/photoboothappbackground.jpg")
@@ -136,6 +133,8 @@ class MainPanel(wx.Panel):
         self.countdownImage = wx.StaticBitmap(self)
         
         self.resetPanelInner()
+
+        self.capturedPictures = []
         
         Publisher.subscribe(self.playSound, "object.playSound")
         
@@ -307,7 +306,7 @@ class MainPanel(wx.Panel):
         outputPictureName = self.newDirName + "/pic-" + str(self.pictureTakenCounter) + ".jpg"
         print(outputPictureName + " " + self.pictureName)
         output = subprocess.call(["cp", self.pictureName, outputPictureName])
-        print str(output)
+
         #Send message to GUI thread
         self.updatePicturePanel(outputPictureName)
             
@@ -366,9 +365,8 @@ class MainPanel(wx.Panel):
                     self.addPicture(fileName,location)
       
     def addPicture(self, fileName, location):
-        global imageList
 
-        imageList.add(fileName, location)
+        self.capturedPictures.append(fileName, location[0], location[1])
         self.logger.debug("Added " + fileName + " to " + location[0] + "," + location[1])
  
     def resizePicture(self, imagePath):
@@ -382,30 +380,26 @@ class MainPanel(wx.Panel):
         
         self.logger.debug("makeCollage - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         self.logger.debug("Creating collage")
-        global imageList
-        global photo
-        global img
-        global currentTime
-        
+
         destination = "./raw"
         fileName = self.outputPath + "/photoBoothOutput"
-        current = imageList.selfHead()
         collageName = ""
         tempName = ""
         
-        while not imageList.isEmpty() and current != None:
+        #while len(self.capturedPictures) != 0 and current != None:
+        for current in self.capturedPictures:
             pic = current.getData()
-            img.paste(pic,(int(current.getLocation()[0]),int(current.getLocation()[1])))          
+            self.photoboothLayoutPicture.paste(pic,(current.x,current.y))          
             if current.getPosition() % 4 == 0 :
-                photo += 1
+                self.photoCounter += 1
                 currentTime = datetime.datetime.now()
                 tempName = "Photobooth_"+ str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-') + ".jpg"
                 collageName = fileName + "/" + tempName
-                img.save(collageName)
+                self.photoboothLayoutPicture.save(collageName)
 
             current = current.getNext()
         
-        imageList = LinkedList() 
+        self.capturedPictures = []
         
         #Send message to GUI thread
         self.logger.debug("Calling showCollage from: " + threading.current_thread().name)
