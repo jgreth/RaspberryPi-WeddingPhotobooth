@@ -33,8 +33,10 @@ import photoboothSupport.GPIOThread as gpio
 os.system("sudo amixer cset numid=3 1")
 
 def mimicButtonPress():
-    '''This operation mimics a "hardware" button press
-    Function is used for testing purposes only'''
+    '''
+    This operation mimics a "hardware" button press
+    Function is used for testing purposes only
+    '''
     global gpioThread
     gpioThread.beginPictureCapture()
 

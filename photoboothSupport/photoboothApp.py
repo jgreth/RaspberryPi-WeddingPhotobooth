@@ -59,10 +59,6 @@ class PhotoBoothApp(wx.App):
                 self.ProcessIdle()
                 
 class MainPanel(wx.Panel):
-
-    takenPictureSizeWindowWidth = 300
-    takenPictureSizeWindowHeight = 220
-    takenPictureLeftOffset = 1560
     
     mainPanelWxObjectCount = 0
 
@@ -88,17 +84,28 @@ class MainPanel(wx.Panel):
         self.frame = parent
         
         collageWindow = self.configurationData['collageImageWindow']
-        self.topBorderOffset = collageWindow['topBorderOffset']
-        self.leftBorderOffset = int(collageWindow['leftBorderOffset'])
-        self.secondColumnOffset = int(collageWindow['secondColumnOffset'])   
-        self.bottomRowAdjustment = int(collageWindow['bottomRowAdjustment'])
+        self.collageWindowFirstPicturePosition = (collageWindow['firstPicture']['X'], collageWindow['firstPicture']['Y'])
+        self.collageWindowSecondPicturePosition = (collageWindow['secondPicture']['X'], collageWindow['secondPicture']['Y'])
+        self.collageWindowThirdPicturePosition = (collageWindow['thirdPicture']['X'], collageWindow['thirdPicture']['Y'])
+        self.collageWindowFourthPicturePosition = (collageWindow['fourthPicture']['X'], collageWindow['fourthPicture']['Y'])
+        
         
         pictureSize = self.configurationData['pictureSize']
         self.reducedHeight = int(pictureSize['reducedHeight'])
         self.reducedWidth = int(pictureSize['reducedWidth'])
         
+        countdownTimerPosition = self.configurationData['countdownTimerPosition']
+        self.countdownTimerPosition = (int(countdownTimerPosition['X']), int(countdownTimerPosition['Y']))
+        
         beginTextPosition = self.configurationData['beginTextPosition']
         processingTextPosition = self.configurationData['processingTextPosition']
+        
+        capturedPicturePosition = self.configurationData['capturedPicturePosition']
+        self.capturedPictureSize = (capturedPicturePosition['width'], capturedPicturePosition['height'])
+        self.capturedFirstPicturePosition = (capturedPicturePosition['firstPicture']['X'], capturedPicturePosition['firstPicture']['Y'])
+        self.capturedSecondPicturePosition = (capturedPicturePosition['secondPicture']['X'], capturedPicturePosition['secondPicture']['Y'])
+        self.capturedThirdPicturePosition = (capturedPicturePosition['thirdPicture']['X'], capturedPicturePosition['thirdPicture']['Y'])
+        self.capturedFourthPicturePosition = (capturedPicturePosition['fourthPicture']['X'], capturedPicturePosition['fourthPicture']['Y'])
         
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         
@@ -144,7 +151,7 @@ class MainPanel(wx.Panel):
         if self.picture1 is not None:
             self.picture1.Destroy()
         
-        self.picture1 = wx.StaticBitmap(self,-1,self.wxbmp,(self.takenPictureLeftOffset,60))
+        self.picture1 = wx.StaticBitmap(self,-1,self.wxbmp,self.capturedFirstPicturePosition)
         self.wximg.Destroy()
         self.wxbmp.Destroy()
 
@@ -154,7 +161,7 @@ class MainPanel(wx.Panel):
         if self.picture2 is not None:
             self.picture2.Destroy()
             
-        self.picture2 = wx.StaticBitmap(self,-1,self.wxbmp,(self.takenPictureLeftOffset,305))
+        self.picture2 = wx.StaticBitmap(self,-1,self.wxbmp,self.capturedSecondPicturePosition)
         self.wximg.Destroy()
         self.wxbmp.Destroy()
 
@@ -164,7 +171,7 @@ class MainPanel(wx.Panel):
         if self.picture3 is not None:
             self.picture3.Destroy()
         
-        self.picture3 = wx.StaticBitmap(self,-1,self.wxbmp,(self.takenPictureLeftOffset,550))
+        self.picture3 = wx.StaticBitmap(self,-1,self.wxbmp,self.capturedThirdPicturePosition)
         self.wximg.Destroy()
         self.wxbmp.Destroy()
 
@@ -174,7 +181,7 @@ class MainPanel(wx.Panel):
         if self.picture4 is not None:
             self.picture4.Destroy()
         
-        self.picture4 = wx.StaticBitmap(self,-1,self.wxbmp,(self.takenPictureLeftOffset,795))
+        self.picture4 = wx.StaticBitmap(self,-1,self.wxbmp,self.capturedFourthPicturePosition)
         self.wximg.Destroy()
         self.wxbmp.Destroy()
 
@@ -198,32 +205,32 @@ class MainPanel(wx.Panel):
         self.logger.debug("Updating picture " + str(self.pictureTakenCounter) + " from " + threading.current_thread().name)
         
         self.twximg = wx.Image(str(self.picturePath),wx.BITMAP_TYPE_JPEG)
-        self.bmp = self.twximg.Rescale(self.takenPictureSizeWindowWidth, self.takenPictureSizeWindowHeight).ConvertToBitmap()
+        self.bmp = self.twximg.Rescale(self.capturedPictureSize[0],self.capturedPictureSize[1]).ConvertToBitmap()
         
         if self.pictureTakenCounter == 1:
             if self.picture1 is not None:
                 self.picture1.Destroy()
                 
-            self.picture1 = wx.StaticBitmap(self, -1, self.bmp, (self.takenPictureLeftOffset,60))
+            self.picture1 = wx.StaticBitmap(self, -1, self.bmp, self.capturedFirstPicturePosition)
             self.logger.debug("updatePicturePanel - 1 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         elif self.pictureTakenCounter == 2:
             if self.picture2 is not None:
                 self.picture2.Destroy()
                 
-            self.picture2 = wx.StaticBitmap(self,-1, self.bmp, (self.takenPictureLeftOffset,305))
+            self.picture2 = wx.StaticBitmap(self,-1, self.bmp, self.capturedSecondPicturePosition)
             self.logger.debug("updatePicturePanel - 2 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         elif self.pictureTakenCounter == 3:
             if self.picture3 is not None:
                 self.picture3.Destroy()
             
-            self.picture3 = wx.StaticBitmap(self,-1, self.bmp,(self.takenPictureLeftOffset,550))
+            self.picture3 = wx.StaticBitmap(self,-1, self.bmp, self.capturedThirdPicturePosition)
             self.logger.debug("updatePicturePanel - 3 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         elif self.pictureTakenCounter == 4:
             
             if self.picture4 is not None:
                 self.picture4.Destroy()
                 
-            self.picture4 = wx.StaticBitmap(self,-1, self.bmp,(self.takenPictureLeftOffset,795))
+            self.picture4 = wx.StaticBitmap(self,-1, self.bmp, self.capturedFourthPicturePosition)
             self.showProcessingText()
             self.logger.debug("updatePicturePanel - 4 - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
@@ -265,7 +272,8 @@ class MainPanel(wx.Panel):
             if self.countdownImage is not None:
                 self.countdownImage.Destroy()
             
-            self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.countdownCounter],(1225,100))
+            self.countdownImage = wx.StaticBitmap(self,-1, self.countdownImages[self.countdownCounter],
+                                                  (self.countdownTimerPosition))
             self.countdownCounter += 1
             sleep(.75)
             subprocess.Popen(["aplay", "./res/beep-07.wav"])
@@ -341,19 +349,19 @@ class MainPanel(wx.Panel):
                     pindex = tempList.index(picture) + 1
                     if pindex % 4 == 1:
                         self.logger.debug("Top Pic % 1 " + picture)
-                        location = str(self.leftBorderOffset) + "," + self.topBorderOffset
+                        location = self.collageWindowFirstPicturePosition #str(self.leftBorderOffset) + "," + str(self.topBorderOffset)
                         self.logger.debug(location)
                     elif pindex % 4 == 2:
                         self.logger.debug("Top Pic % 2 " + picture)
-                        location = str(self.reducedWidth + self.secondColumnOffset) + "," + self.topBorderOffset
+                        location = self.collageWindowSecondPicturePosition #str(self.leftBorderOffset + self.reducedWidth + self.secondColumnOffset) + "," + str(self.topBorderOffset)
                         self.logger.debug(location)
                     elif pindex % 4 == 3:
                         self.logger.debug("Bottom Pic % 3 " + picture)
-                        location = str(self.reducedWidth + self.secondColumnOffset) + "," + str(self.reducedHeight+self.bottomRowAdjustment)
+                        location = self.collageWindowThirdPicturePosition #str(self.leftBorderOffset + self.reducedWidth + self.secondColumnOffset) + "," + str(self.topBorderOffset + self.reducedHeight + self.bottomRowAdjustment)
                         self.logger.debug(location)
                     elif pindex % 4 == 0:
                         self.logger.debug("Bottom Pic % 0 " + picture)
-                        location = str(self.leftBorderOffset) + "," + str(self.reducedHeight+self.bottomRowAdjustment)
+                        location = self.collageWindowFourthPicturePosition #str(self.leftBorderOffset) + "," + str(self.topBorderOffset + self.reducedHeight + self.bottomRowAdjustment)
                         self.logger.debug(location)
                     self.addPicture(fileName,location)
       
@@ -361,7 +369,7 @@ class MainPanel(wx.Panel):
         global imageList
 
         imageList.add(fileName, location)
-        self.logger.debug("Added " + fileName + " to " + location)
+        self.logger.debug("Added " + fileName + " to " + location[0] + "," + location[1])
  
     def resizePicture(self, imagePath):
         collageReducedPictureSize = self.reducedHeight, self.reducedWidth

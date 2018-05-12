@@ -50,9 +50,9 @@ class Node:
         self.width, self.height = self.data.size
         
     def setLocation(self, location):
-        for i in location:
+        '''for i in location:
             if i == ",":
                 location = location.replace(","," ")
-        location = location.split(" ")
+        location = location.split(" ")'''
         self.location = [location[0],location[1]]
 
