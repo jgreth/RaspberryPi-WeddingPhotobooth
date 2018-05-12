@@ -390,7 +390,7 @@ class MainPanel(wx.Panel):
         
         #while len(self.capturedPictures) != 0 and current != None:
         for current in self.capturedPictures:
-            pic = current.getData()
+            pic = current.data
             self.photoboothLayoutPicture.paste(pic,(current.x,current.y))          
             if current.getPosition() % 4 == 0 :
                 self.photoCounter += 1
@@ -398,8 +398,6 @@ class MainPanel(wx.Panel):
                 tempName = "Photobooth_"+ str(currentTime).replace(' ', '_').split('.')[0].replace(':', '-') + ".jpg"
                 collageName = fileName + "/" + tempName
                 self.photoboothLayoutPicture.save(collageName)
-
-            current = current.getNext()
         
         self.capturedPictures = []
         

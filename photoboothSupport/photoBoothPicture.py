@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import Image
 
 class PhotoBoothPicture:
 
@@ -9,4 +10,5 @@ class PhotoBoothPicture:
         self.height = height
         self.x = x
         self.y = y
+        self.data = Image.open(fileName)
 
