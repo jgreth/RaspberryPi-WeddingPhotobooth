@@ -21,4 +21,14 @@ if not os.path.exists(configFilePath):
     subprocess.call("./Dropbox-Uploader/dropbox_uploader.sh".split(" "))
 else:
     print("dropbox_uploader.sh is already configured, if you would like to reconfigure run: " + configFilePath)
+ 
+#If if a verison of the pycbox exists, it f it does remove it
+if os.path.exists("pycbox"):
+    print("Removing old copy of pycbox")
+    subprocess.call("rm -rf pycbox".split(" "))
     
+#Retreive a fresh copy
+print("Pulling new version of pycbox from github")
+subprocess.call("git clone https://github.com/coldfix/pycbox".split(" "))
+subprocess.call("mv pycbox/config.example.yml pycbox/config.yml".split(" "))  
+print("pycbox is configured and ready to run!")    

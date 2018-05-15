@@ -1,15 +1,15 @@
 {
 	"configuration":
 	{
-		"outputDirectory": "/media/pi/KINGSTON1/photoBoothOutput/",
+		"outputDirectory": "/media/pi/KINGSTON/photoBoothOutput/",
 		"logFilePath": "/tmp/photobooth.log"	
 	},
 	"previewWindow":
 	{
 		"X": 85,
 		"Y": 50,
-		"height": 1200,
-		"width": 600	
+		"height": 600,
+		"width": 1200	
 	},
 	"pictureSize":
 	{
