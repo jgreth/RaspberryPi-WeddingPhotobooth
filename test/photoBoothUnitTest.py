@@ -11,10 +11,10 @@ class PhotoboothMethods(unittest.TestCase):
         
         jsonFile = pbSupport.loadJson()
         configuration = jsonFile['configuration']
-        self.assertEqual(configuration['outputDirectory'], '/media/pi/KINGSTON1/photoBoothOutput/')
+        self.assertEqual(configuration['outputDirectory'], '/tmp/photoboothOutput/')
         
         previewWindow = jsonFile['previewWindow']
-        self.assertEqual(previewWindow['X'], '85')
+        self.assertEqual(previewWindow['X'], 85)
 
     
 '''

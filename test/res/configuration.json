@@ -1,0 +1,85 @@
+{
+	"configuration":
+	{
+		"outputDirectory": "/tmp/photoboothOutput/",
+		"logFilePath": "/tmp/photobooth.log"	
+	},
+	"previewWindow":
+	{
+		"X": 85,
+		"Y": 50,
+		"height": 600,
+		"width": 1200	
+	},
+	"pictureSize":
+	{
+		"height": 800,
+		"width": 600,
+		"reducedHeight": 360,
+		"reducedWidth": 270
+	},
+	"beginTextPosition":
+	{
+		"X": 925,
+		"Y": 100
+	},
+	"processingTextPosition":
+	{
+		"X": 925,
+		"Y": 100
+	},
+	"countdownTimerPosition":
+	{
+		"X": 1200,
+		"Y": 275
+	},
+	"capturedPicturePosition":
+	{
+		"height": 220,
+		"width": 300,
+		"firstPicture":
+		{
+			"X": 1580,
+			"Y": 60	
+		},
+		"secondPicture":
+		{
+			"X": 1580,
+			"Y": 305	
+		},
+		"thirdPicture":
+		{
+			"X": 1580,
+			"Y": 550
+		},
+		"fourthPicture":
+		{
+			"X": 1580,
+			"Y": 795	
+		}
+	
+	},
+	"collageImageWindow":
+	{
+		"firstPicture":
+		{
+			"X": "137",
+			"Y": "20"	
+		},
+		"secondPicture":
+		{
+			"X": "512",
+			"Y": "20"	
+		},
+		"thirdPicture":
+		{
+			"X": "137",
+			"Y": "300"
+		},
+		"fourthPicture":
+		{
+			"X": "512",
+			"Y": "300"	
+		}
+	}
+}

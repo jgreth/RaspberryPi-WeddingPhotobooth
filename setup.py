@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-
 import os
 import subprocess
 
@@ -32,3 +30,10 @@ print("Pulling new version of pycbox from github")
 subprocess.call("git clone https://github.com/coldfix/pycbox".split(" "))
 subprocess.call("mv pycbox/config.example.yml pycbox/config.yml".split(" "))  
 print("pycbox is configured and ready to run!")    
+
+#Installing Dependencies required for configuring a new Raspberry Pi
+subprocess.call("sudo apt-get install python-wxgtk2.8 python-wxtools wx2.8-i18n libwxgtk2.8-dev".split(" "))
+subprocess.call("sudo apt-get install python-imaging".split(" "))
+subprocess.call("sudo apt-get install python-setuptools".split(" "))
+subprocess.call("sudo easy_install -U RPIO".split(" "))
+
