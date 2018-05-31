@@ -40,7 +40,6 @@ def mimicButtonPress():
     global gpioThread
     gpioThread.beginPictureCapture()
 
-
 def main(configurationData, camera, logger):
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    #Need for test script, to mimic button press
     global gpioThread
@@ -56,10 +55,11 @@ def main(configurationData, camera, logger):
     
     logger.debug("Requesting " + str(cameraResolution['width']) + " " + str(cameraResolution['height']))
     camera.resolution = (int(cameraResolution['width']),int(cameraResolution['height']))
-  
     camera.start_preview()
     camera.preview.fullscreen = False
-    camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(cameraResolution['height']),int(cameraResolution['width']))
+    camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(previewWindow['width']),int(previewWindow['height']))
+    
+ 
     
     outputPath = configuration['outputDirectory']
     outputDirPath = outputPath + "photoBoothOutput"

@@ -298,7 +298,7 @@ class MainPanel(wx.Panel):
         p = subprocess.Popen(["aplay", os.getcwd() + "/res/camera-shutter-click-01.wav"])
                
         #Take picture
-        self.camera.capture(self.pictureName, resize=(self.reducedHeight, self.reducedWidth))
+        self.camera.capture(self.pictureName, resize=(self.reducedWidth, self.reducedHeight))
 
         #sleep(1)
         #Turn off flash
@@ -349,19 +349,19 @@ class MainPanel(wx.Panel):
                     pindex = tempList.index(picture) + 1
                     if pindex % 4 == 1:
                         self.logger.debug("Top Pic % 1 " + picture)
-                        location = self.collageWindowFirstPicturePosition #str(self.leftBorderOffset) + "," + str(self.topBorderOffset)
+                        location = self.collageWindowFirstPicturePosition 
                         self.logger.debug(location)
                     elif pindex % 4 == 2:
                         self.logger.debug("Top Pic % 2 " + picture)
-                        location = self.collageWindowSecondPicturePosition #str(self.leftBorderOffset + self.reducedWidth + self.secondColumnOffset) + "," + str(self.topBorderOffset)
+                        location = self.collageWindowSecondPicturePosition 
                         self.logger.debug(location)
                     elif pindex % 4 == 3:
                         self.logger.debug("Bottom Pic % 3 " + picture)
-                        location = self.collageWindowThirdPicturePosition #str(self.leftBorderOffset + self.reducedWidth + self.secondColumnOffset) + "," + str(self.topBorderOffset + self.reducedHeight + self.bottomRowAdjustment)
+                        location = self.collageWindowThirdPicturePosition 
                         self.logger.debug(location)
                     elif pindex % 4 == 0:
                         self.logger.debug("Bottom Pic % 0 " + picture)
-                        location = self.collageWindowFourthPicturePosition #str(self.leftBorderOffset) + "," + str(self.topBorderOffset + self.reducedHeight + self.bottomRowAdjustment)
+                        location = self.collageWindowFourthPicturePosition 
                         self.logger.debug(location)
                     self.addPicture(fileName,location)
       
@@ -369,14 +369,14 @@ class MainPanel(wx.Panel):
         pbPicture = PhotoBoothPicture(fileName, location[0], location[1])
         self.capturedPictures.append(pbPicture)
         self.logger.debug("Added " + fileName + " to " + location[0] + "," + location[1])
- 
+    '''
     def resizePicture(self, imagePath):
         collageReducedPictureSize = self.reducedHeight, self.reducedWidth
         
         image = Image.open(imagePath)
         image.thumbnail(collageReducedPictureSize, Image.ANTIALIAS)
         image.save(imagePath + "_collage", "JPEG")
-            
+    '''           
     def makeCollage(self):
         
         self.logger.debug("makeCollage - Start - Memory usage: %s (kb)" % resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
@@ -493,7 +493,7 @@ class MainWindow(wx.Frame):
   
         self.camera.start_preview()
         self.camera.preview.fullscreen = False
-        self.camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(cameraResolution['height']),int(cameraResolution['width']))
+        self.camera.preview.window =(int(previewWindow['X']),int(previewWindow['Y']),int(previewWindow['width']),int(previewWindow['height']))
     
     def showCollage(self, collagePath):
         self.collagePath = collagePath

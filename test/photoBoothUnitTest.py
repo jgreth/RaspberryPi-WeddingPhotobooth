@@ -21,7 +21,7 @@ class PhotoboothMethods(unittest.TestCase):
 TODO: How can I do this, need to pass in multiple parameters to class, can I mock them?
 class PhotoboothMainPanelMethods(unittest.TestCase):
 
-    def test_monitorFoldern(self):
+    def test_monitorFolder(self):
         
         mainPanel = pbApp.MainPanel(None, None, None,None,None)
         mainPanel.monitorFolder("./testPictures/")

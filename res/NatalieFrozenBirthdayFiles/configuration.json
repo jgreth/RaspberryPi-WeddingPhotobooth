@@ -6,17 +6,17 @@
 	},
 	"previewWindow":
 	{
-		"X": 85,
+		"X": -150,
 		"Y": 50,
 		"height": 600,
 		"width": 1200	
 	},
 	"pictureSize":
 	{
-		"height": 800,
-		"width": 600,
-		"reducedHeight": 360,
-		"reducedWidth": 270
+		"height": 600,
+		"width": 800,
+		"reducedHeight": 270,
+		"reducedWidth": 360
 	},
 	"beginTextPosition":
 	{
